@@ -1,4 +1,5 @@
 const usersModel = require("../model/users _api_model");
+const { tryIntegration } = require("./ixc_integration_controller");
 
 
 module.exports = {
@@ -25,13 +26,14 @@ module.exports = {
 
     },
 
-    login: (req, res) => {
+    login: async (req, res) => {
        const {sercret} = req.body
        const userSecret = usersModel.getUserBySecret(sercret);
        if(!userSecret) {
         return res.status(404).json({error: 'Token inválido!'})
        } else {
         return res.status(200).json({message: 'Usuário autorizado!'})
+        await tryIntegration(req,res);
        }
     }
 }
