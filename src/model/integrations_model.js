@@ -1,20 +1,29 @@
 require("dotenv").config();
 const uuid = require("uuid").v4;
 
-
-const integrations = require('./req_api_model')
+const integrationsList = [
+  {
+    id: "1",
+    name: "ixc-Itabaiana",
+    host: "https://ixc-sergipe.vianet.online",
+    secret:
+      "6:b40ed1fbd0002cf4c9d04de2112f8761062517f55bc5559c693272d19621d6c5",
+    type: "ixc.standard.central.vd_contrato_produto",
+  },
+];
 
 module.exports = {
-  getAllIntegrations: () => integrations,
+
+  getAllIntegrations: () => integrationsList,
 
   getIntegrationById: (id) =>
-    integrations.find((integration) => integration.id == id),
+    integrationsList.find((integration) => integration.id == id),
 
   getIntegrationByName: (name) =>
-    integrations.find((integration) => integration.name == name),
+    integrationsList.find((integration) => integration.name == name),
 
   getIntegrationBySecret: (secret) =>
-    integrations.find((integration) => integration.secret == secret),
+    integrationsList.find((integration) => integration.secret == secret),
 
   createIntegration: (name, host, sercret, type) => {
     const id = uuid();
@@ -25,7 +34,7 @@ module.exports = {
       sercret,
       type,
     };
-    integrations.push(newIntegration);
+    integrationsList.push(newIntegration);
     return newIntegration;
   },
 };

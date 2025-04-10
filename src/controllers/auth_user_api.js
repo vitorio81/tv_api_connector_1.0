@@ -27,13 +27,15 @@ module.exports = {
     },
 
     login: async (req, res) => {
-       const {sercret} = req.body
-       const userSecret = usersModel.getUserBySecret(sercret);
+       const { secret, username, password } = req.body;
+       const userSecret = usersModel.getUserBySecret(secret);
        if(!userSecret) {
         return res.status(404).json({error: 'Token inválido!'})
-       } else {
-        return res.status(200).json({message: 'Usuário autorizado!'})
-        await tryIntegration(req,res);
        }
+        if(!username || !password) {
+            return res.status(404).json({error: 'Password ou username não encontrados!'})
+        }
+
+        await tryIntegration(req, res);
     }
 }

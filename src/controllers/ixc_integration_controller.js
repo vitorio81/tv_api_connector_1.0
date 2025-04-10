@@ -1,51 +1,78 @@
 // controller.js
 const axios = require("axios");
-const integrationsList = require("./req_api_model");
+const integrations_model = require("../model/integrations_model");
+const { validate } = require("uuid");
+
 
 const tryIntegration = async (req, res) => {
-  const {host: orignalHost, type, secret: originalSecret, username, password } = req.body;
+  const {host: originalHost, type, secret: originalSecret, username, password } = req.body;
 
-  for (let integration of integrationsList) {
+  const integrationsListn = integrations_model.getAllIntegrations()
+
+  let statusRequest = false;
+
+  const integrationsAttempts = [];
+
+  for (let integration of integrationsListn) {
     try {
       const response = await axios.post(`${integration.host}`, {
         host: integration.host,
         type,
-        secret: integration.token,
+        secret: integration.secret,
         username,
         password,
+      });
+
+      integrationsAttempts.push({
+        host: integration.host,
+        status: 'sucesso',
+        validate: response.data.validate,
       })
-      const integrationSecret = integrationsModel.getIntegrationBySecret(
-        integration.token
-      ) 
-      if(!integrationSecret) {
+
+      statusRequest = true;
+
+
+      const integrationSecret = integrations_model.getIntegrationBySecret(integration.secret)
+
+      if (!integrationSecret) {
         return res
           .status(401)
           .json({ message: "Token da integração não está autorizado." });
       } else {
         if (response.data.validate === true) {
-           return res.status(200).json({
-             host: originalHost,
-             secret: originalSecret,
-             type,
-             username,
-             password,
-             validate: true,
-           });
+          return res.status(200).json({
+            host: originalHost,
+            secret: originalSecret,
+            type,
+            username,
+            password,
+            validate: true,
+          });
         }
       }
     } catch (err) {
-      console.log(`Erro com ${integration.host}:`, err.message);
+      integrationsAttempts.push({
+        host: integration.host,
+        status: 'erro',
+        validate: response.data.validate,
+      });
       continue;
     }
   }
 
-  return res.status(200).json({
-    host: orignalHost,
-    secret: originalSecret,
-    type,
-    username,
-    password,
-    validate: false,
+   if (!statusRequest) {
+     return res.status(500).json({
+       message: "Não foi possível integrar com nenhuma API.",
+     });
+   }
+
+    return res.status(200).json({
+        host: originalHost,
+        secret: originalSecret,
+        type,
+        username,
+        password,
+        validate: false,
   });
 };
 
