@@ -1,7 +1,7 @@
 require("dotenv").config();
 const uuid = require("uuid").v4;
 
-const integrationsList = [
+let integrationsList = [
   {
     id: "1",
     name: "ixc-Itabaiana",
@@ -17,24 +17,34 @@ module.exports = {
   getAllIntegrations: () => integrationsList,
 
   getIntegrationById: (id) =>
-    integrationsList.find((integration) => integration.id == id),
+    integrationsList.find((integration) => integration.id === id),
 
   getIntegrationByName: (name) =>
-    integrationsList.find((integration) => integration.name == name),
+    integrationsList.find((integration) => integration.name === name),
 
   getIntegrationBySecret: (secret) =>
-    integrationsList.find((integration) => integration.secret == secret),
+    integrationsList.find((integration) => integration.secret === secret),
 
   createIntegration: (name, host, sercret, type) => {
     const id = uuid();
+    const currentDate = new Date().toISOString().split("T")[0]; 
     const newIntegration = {
       id,
       name,
       host,
       sercret,
       type,
+      currentDate,
     };
     integrationsList.push(newIntegration);
     return newIntegration;
   },
+
+  deleteIntegration: (id) => {
+    const InteIndex = integrationsList.findIndex(integration => integration.id === id)
+    if(InteIndex === -1)throw new HttpError(404, "Integração não encontra no sistema!")
+    const deleteIntegration = integrationsList[InteIndex]
+    integrationsList = integrationsList.filter(integration => integration.id !== id)
+    return deleteIntegration
+  }
 };

@@ -2,16 +2,20 @@
 const axios = require("axios");
 const integrations_model = require("../model/integrations_model");
 const { validate } = require("uuid");
-
+const request_model = require("../model/request_model");
 
 const tryIntegration = async (req, res) => {
-  const {host: originalHost, type, secret: originalSecret, username, password } = req.body;
+  const {
+    host: originalHost,
+    type,
+    secret: originalSecret,
+    username,
+    password,
+  } = req.body;
 
-  const integrationsListn = integrations_model.getAllIntegrations()
+  const integrationsListn = integrations_model.getAllIntegrations();
 
   let statusRequest = false;
-
-  const integrationsAttempts = [];
 
   for (let integration of integrationsListn) {
     try {
@@ -23,16 +27,17 @@ const tryIntegration = async (req, res) => {
         password,
       });
 
-      integrationsAttempts.push({
+      request_model.createRequest({
         host: integration.host,
-        status: 'sucesso',
+        status: "sucesso",
         validate: response.data.validate,
-      })
+      });
 
       statusRequest = true;
 
-
-      const integrationSecret = integrations_model.getIntegrationBySecret(integration.secret)
+      const integrationSecret = integrations_model.getIntegrationBySecret(
+        integration.secret
+      );
 
       if (!integrationSecret) {
         return res
@@ -51,29 +56,29 @@ const tryIntegration = async (req, res) => {
         }
       }
     } catch (err) {
-      integrationsAttempts.push({
+      request_model.createRequest({
         host: integration.host,
-        status: 'erro',
+        status: "sucesso",
         validate: response.data.validate,
       });
       continue;
     }
   }
 
-   if (!statusRequest) {
-     return res.status(500).json({
-       message: "Não foi possível integrar com nenhuma API.",
-     });
-   }
-
+  if (!statusRequest) {
+    return res.status(500).json({
+      message: "Não foi possível integrar com nenhuma API.",
+    });
+  } else {
     return res.status(200).json({
-        host: originalHost,
-        secret: originalSecret,
-        type,
-        username,
-        password,
-        validate: false,
-  });
+      host: originalHost,
+      secret: originalSecret,
+      type,
+      username,
+      password,
+      validate: false,
+    });
+  }
 };
 
 module.exports = { tryIntegration };
