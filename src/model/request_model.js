@@ -2,13 +2,7 @@ require("dotenv").config();
 const uuid = require("uuid").v4;
 
 let requests = [
-  {
-    id: "1",
-    host: integration.host,
-    status: "sucesso",
-    validate: response.data.validate,
-    dateTimeRequest: new Date(),
-  },
+
 ];
 
 module.exports = {
