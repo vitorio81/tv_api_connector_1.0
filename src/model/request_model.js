@@ -1,31 +1,59 @@
+const { query } = require("../../config_database/pool");
 require("dotenv").config();
-const uuid = require("uuid").v4;
 
-let requests = [
-
-];
 
 module.exports = {
-  getAllRequests: () => requests,
+  getAllRequests: async () => {
+    const { rows } = await query(`
+      SELECT 
+      id, host, status, validate, dateTimerequest
+      FROM requests`);
+    return rows;
+  },
 
-  getRequestById: (id) => requests.find((request) => request.id === id),
+  getRequestById: async (id) => {
+    const { rows } = await query(
+      `
+      SELECT 
+      id, host, status, validate, dateTimerequest
+      FROM requests WHERE id = $1`,
+      [id]
+    );
+    return rows[0];
+  },
 
-  getRequestByHost: (host) => requests.find((request) => request.host === host),
+  getRequestByHosts: async (partialHosts) => {
+    const { rows } = await query(
+      `
+      SELECT 
+      id, host, status, validate, dateTimerequest
+      FROM requests WHERE host ILIKE $1`,
+      [`%${partialHosts}%`]
+    );
+    return rows;
+  },
 
-  getRequestByStatus: (status) =>
-    requests.find((request) => request.status === status),
+  getRequestByStatus: async (partialSattus) => {
+    const { rows } = await query(
+      `SELECT 
+     id, host, status, validate, dateTimerequest
+     FROM requests
+     WHERE name ILIKE $1`,
+      [`%${partialSattus}%`]
+    );
+    return rows; // Retorna todos os usuários que contenham 'partialName' no nome
+  },
 
-  createRequest: ({host, status, validate}) => {
-    const id = uuid();
+  createRequest: async ({ host, status, validate }) => {
+    const dataTimeRequest = new Date
     const newRequest = {
-      id,
       host,
       status,
       validate,
-      dateTimeRequest: new Date(),
+      dataTimeRequest
     };
-    requests.push(newRequest);
+    await query(`INSERT INTO requests (host, status, validate, datetimerequest) VALUES ($1, $2, $3, $4);`, [host, status, validate, dataTimeRequest]
+    );
     return newRequest;
   },
-
 };

@@ -1,7 +1,6 @@
 // controller.js
 const axios = require("axios");
 const integrations_model = require("../model/integrations_model");
-const { validate } = require("uuid");
 const request_model = require("../model/request_model");
 
 const tryIntegration = async (req, res) => {
@@ -13,11 +12,11 @@ const tryIntegration = async (req, res) => {
     password,
   } = req.body;
 
-  const integrationsListn = integrations_model.getAllIntegrations();
-
   let statusRequest = false;
 
-  for (let integration of integrationsListn) {
+  const integrationList = await integrations_model.getAllIntegrations();
+
+  for (let integration of integrationList) {
     try {
       const response = await axios.post(`${integration.host}`, {
         host: integration.host,
@@ -27,7 +26,7 @@ const tryIntegration = async (req, res) => {
         password,
       });
 
-      request_model.createRequest({
+      await request_model.createRequest({
         host: integration.host,
         status: "sucesso",
         validate: response.data.validate,
@@ -35,7 +34,7 @@ const tryIntegration = async (req, res) => {
 
       statusRequest = true;
 
-      const integrationSecret = integrations_model.getIntegrationBySecret(
+      const integrationSecret = await integrations_model.getIntegrationBySecret(
         integration.secret
       );
 
@@ -55,12 +54,14 @@ const tryIntegration = async (req, res) => {
           });
         }
       }
-    } catch (err) {
-      request_model.createRequest({
+    } catch (error) {
+      await request_model.createRequest({
         host: integration.host,
-        status: "sucesso",
-        validate: response.data.validate,
+        status: "erro", // Corrigido: se caiu no catch, é um erro
+        validate: false, // Não foi validado com sucesso
       });
+
+      console.error(error.response?.data || error.message);
       continue;
     }
   }

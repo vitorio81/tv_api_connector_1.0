@@ -4,9 +4,9 @@ const pool = new Pool({
     connectionString: "postgresql://postgres:123456@localhost:5432/banco_tv_conector"
 });
 
-async function query(queryString, params, callback) {
+async function query(queryString, params = []) {
     console.log("log: query executada - " + queryString)
-    return pool.query(queryString, params, callback);
+    return pool.query(queryString, params);
 }
 
 module.exports = {query};

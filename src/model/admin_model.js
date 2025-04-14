@@ -1,25 +1,40 @@
-require("dotenv").config();
-const uuid = require("uuid").v4;
+const { query } = require("../../config_database/pool");
 
-let adminList = [
-  {
-    id: "1",
-    username: "vitorio",
-    email: "vitorioteste@gmail.com",
-    password: "123456",
-  },
-];
+require("dotenv").config();
 
 module.exports = {
-  getAllAdmin: () => adminList.map,
+  getAllAdmin: async () => {
+    const { rows } = await query(`
+      SELECT 
+      id, username, email, password, currentDate
+      FROM admin`);
+    return rows;
+  },
 
-  getAdminById: (id) => adminList.find((admin) => admin.id === id),
+  getAdminById: async (id) => {
+    const { rows } = await query(
+      `
+      SELECT 
+      id, username, email, password, currentDate
+      FROM admin WHERE id =$1`,
+      [id]
+    );
+    return rows[0];
+  },
 
-  getAdminByEmail: (email) => adminList.find((admin) => admin.email === email),
+  getAdminByEmail: async (email) => {
+    const { rows } = await query(
+      `
+      SELECT 
+      id, username, email, password, currentDate
+      FROM admin WHERE email =$1`,
+      [email]
+    );
+    return rows[0];
+  },
 
-  createAdmin: (username, email, password) => {
-    const id = uuid();
-    const currentDate = new Date().toISOString().split("T")[0]; 
+  createAdmin: async (username, email, password) => {
+    const currentDate = new Date().toISOString().split("T")[0];
     const newAdmin = {
       id,
       username,
@@ -27,16 +42,10 @@ module.exports = {
       password,
       currentDate,
     };
-    adminList.push(newAdmin);
+    await query(
+      `INSET INTO admin (id, username, email, password, currentdate,) VALUES ($1, $2, $3, $4, $5);`,
+      [id, username, email, password, currentDate]
+    );
     return newAdmin;
-  },
-
-  deleteAdmin: (id) => {
-    const adminIndex = adminList.findIndex((admin) => admin.id === id);
-    if (adminIndex === -1)
-      throw new HttpError(404, "Administrador não encontra no sistema!");
-    const deleteAdmin = adminList[adminIndex];
-    adminList = adminList.filter((integration) => integration.id !== id);
-    return deleteAdmin;
   },
 };
