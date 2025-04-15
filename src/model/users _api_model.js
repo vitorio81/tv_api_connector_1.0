@@ -1,6 +1,6 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
-const { query } = require("../../config_database/pool");
+const { query } = require("../config_database/pool");
 
 const API_SECRET_TOKEN_KEY = process.env.API_SECRET_TOKEN_KEY;
 

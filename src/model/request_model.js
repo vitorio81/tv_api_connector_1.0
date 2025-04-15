@@ -1,4 +1,4 @@
-const { query } = require("../../config_database/pool");
+const { query } = require("../config_database/pool");
 require("dotenv").config();
 
 
@@ -6,7 +6,7 @@ module.exports = {
   getAllRequests: async () => {
     const { rows } = await query(`
       SELECT 
-      id, host, status, validate, dateTimerequest
+      id, host, status, validate, datetimerequest AS "dateTimerequest"
       FROM requests`);
     return rows;
   },
@@ -15,7 +15,7 @@ module.exports = {
     const { rows } = await query(
       `
       SELECT 
-      id, host, status, validate, dateTimerequest
+      id, host, status, validate, datetimerequest AS "dateTimerequest"
       FROM requests WHERE id = $1`,
       [id]
     );
@@ -26,7 +26,7 @@ module.exports = {
     const { rows } = await query(
       `
       SELECT 
-      id, host, status, validate, dateTimerequest
+      id, host, status, validate, datetimerequest AS "dateTimerequest"
       FROM requests WHERE host ILIKE $1`,
       [`%${partialHosts}%`]
     );
@@ -36,7 +36,7 @@ module.exports = {
   getRequestByStatus: async (partialSattus) => {
     const { rows } = await query(
       `SELECT 
-     id, host, status, validate, dateTimerequest
+     id, host, status, validate, datetimerequest AS "dateTimerequest"
      FROM requests
      WHERE name ILIKE $1`,
       [`%${partialSattus}%`]
@@ -45,14 +45,14 @@ module.exports = {
   },
 
   createRequest: async ({ host, status, validate }) => {
-    const dataTimeRequest = new Date
+    const dateTimeRequest = new Date
     const newRequest = {
       host,
       status,
       validate,
-      dataTimeRequest
+      dateTimeRequest
     };
-    await query(`INSERT INTO requests (host, status, validate, datetimerequest) VALUES ($1, $2, $3, $4);`, [host, status, validate, dataTimeRequest]
+    await query(`INSERT INTO requests (host, status, validate, datetimerequest) VALUES ($1, $2, $3, $4);`, [host, status, validate, dateTimeRequest]
     );
     return newRequest;
   },

@@ -1,4 +1,4 @@
-const { query } = require("../../config_database/pool");
+const { query } = require("../config_database/pool");
 const users_api_model = require("../model/users _api_model");
 
 module.exports = {

@@ -20,14 +20,18 @@ module.exports = {
           .json({ message: "Todos os campos são obrigatórios" });
       }
 
-      const existingAdmin = admin_model.getAdminByEmail(email);
+      const existingAdmin = await admin_model.getAdminByEmail(email);
       if (existingAdmin) {
         return res
           .status(400)
           .json({ massage: "Administrador já cadastrado!" });
       } else {
-        const  password = await bcrypt.hash(password, 10);
-        const newAdmin = await admin_model.createAdmin(username, email, password);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newAdmin = await admin_model.createAdmin(
+          username,
+          email,
+          hashedPassword
+        );
         return res.status(200).json(newAdmin);
       }
       
@@ -60,7 +64,7 @@ module.exports = {
 
       const payload = { id: admin.id, email: admin.email };
       const token = jwt.sign(payload, process.env.JWT_TOKEN_ADMIN, {
-        expiresIn: "1d",
+        expiresIn: "30m",
       });
       res.json({ token });
       

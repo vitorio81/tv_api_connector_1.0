@@ -1,4 +1,4 @@
-const { query } = require("../../config_database/pool");
+const { query } = require("../config_database/pool");
 
 require("dotenv").config();
 
@@ -6,7 +6,7 @@ module.exports = {
   getAllIntegrations: async () => {
     const { rows } = await query(`
       SELECT 
-      id, name, host, secret, type, currentDate
+      id, name, host, secret, type, currentdate AS "currentDate"
       FROM integrations`);
     return rows;
   },
@@ -15,7 +15,7 @@ module.exports = {
     const { rows } = await query(
       `
       SELECT 
-      id, name, host, secret, type, currentDate
+      id, name, host, secret, type, currentdate AS "currentDate"
       FROM integrations WHERE id = $1`,
       [id]
     );
@@ -26,7 +26,7 @@ module.exports = {
     const { rows } = await query(
       `
       SELECT 
-      id, name, host, secret, type, currentDate
+      id, name, host, secret, type, currentdate AS "currentDate"
       FROM integrations WHERE name = $1`,
       [name]
     );
@@ -48,7 +48,7 @@ module.exports = {
     const { rows } = await query(
       `
       SELECT 
-      id, name, host, secret, type, currentDate
+      id, name, host, secret, type, currentdate AS "currentDate"
       FROM integrations WHERE secret = $1`,
       [secret]
     );
