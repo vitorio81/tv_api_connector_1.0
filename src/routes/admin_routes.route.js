@@ -24,8 +24,13 @@ adminRouters.get(
 
 adminRouters.get(
     "/users", 
-    verifyAdminToken, 
+    verifyAdminToken,  
     controller_user.index);
+
+  adminRouters.get(
+  "/integration/:id", 
+  verifyAdminToken, 
+  controller_integrations.show);
 
 adminRouters.delete(
   "/integrations/:id",

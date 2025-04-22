@@ -19,7 +19,7 @@ module.exports = {
       FROM admin WHERE id =$1`,
       [id]
     );
-    return rows[0];
+    return rows.length > 0 ? rows[0] : null;
   },
 
   getAdminByEmail: async (email) => {

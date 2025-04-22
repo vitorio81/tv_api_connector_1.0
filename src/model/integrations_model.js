@@ -14,12 +14,14 @@ module.exports = {
   getIntegrationById: async (id) => {
     const { rows } = await query(
       `
-      SELECT 
-      id, name, host, secret, type, currentdate AS "currentDate"
-      FROM integrations WHERE id = $1`,
+    SELECT 
+    id, name, host, secret, type, currentdate AS "currentDate"
+    FROM integrations WHERE id = $1
+    `,
       [id]
     );
-    return rows[0];
+
+    return rows.length > 0 ? rows[0] : null;
   },
 
   getIntegrationByName: async (name) => {

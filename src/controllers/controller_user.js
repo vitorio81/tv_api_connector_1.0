@@ -38,14 +38,13 @@ module.exports = {
   delete: async (req, res, next) => {
     try {
       const { id } = req.params;
-
       const user = await users_api_model.getUserById(id);
-      if (!user.length) {
+      if (!user) {
         return res.status(404).json({ error: "Usuário não encontrado!" });
       }
 
       await query(`DELETE FROM users WHERE id = $1`, [id]);
-      return res.json({ data: `Usuário deletado: ${user[0].name}` });
+      return res.json({ data: `Usuário deletado: ${user.name || "sem nome"}` });
     } catch (error) {
       next(error); // envia para o middleware de erro
     }

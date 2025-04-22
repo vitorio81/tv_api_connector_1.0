@@ -1,3 +1,4 @@
+const { query } = require("../config_database/pool");
 const integrations_model = require("../model/integrations_model");
 
 module.exports = {
@@ -23,8 +24,8 @@ module.exports = {
          const newIntegration = await integrations_model.createIntegration(
            name,
            host,
-           type,
-           secret
+           secret,
+           type
          );
          return res.status(200).json(newIntegration);
        } else {
@@ -45,15 +46,31 @@ module.exports = {
     }
   },
 
+  show: async(req, res, next) => {
+    try {
+      const { id } = req.params;
+      const integration = await integrations_model.getIntegrationById(id);
+      if(!integration) {
+        return res.status(404).json({ message: "Integração não encontrada" });
+      }
+      res.json({ data: integration });
+
+    } catch (error) {
+      next(error);
+    }
+  },
+
   delete: async (req, res, next) => {
     try {
       const { id } = req.params;
       const deleteIntegration = await integrations_model.getIntegrationById(id)
-      if(!deleteIntegration.length) {
-        return res.status(404).json({ error: "Integração não encontrada!" });
-      }
+       if (!deleteIntegration) {
+         return res.status(404).json({ error: "Integração não encontrada!" });
+       }
       await query(`DELETE FROM integrations WHERE id = $1`, [id]);
-      return res.json({ data: `Integração deletada: ${integrations[0].name}` });
+      return res.json({
+        data: `Integração deletada: ${deleteIntegration.name || "sem nome"}`,
+      });
     } catch (error) {
       next(error); 
     }

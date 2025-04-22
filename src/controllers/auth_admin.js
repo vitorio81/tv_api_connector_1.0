@@ -42,7 +42,7 @@ module.exports = {
   },
 
   login: async (req, res) => {
-    try {
+    try { 
       const { email, password } = req.body;
       if (typeof email !== "string" || typeof password !== "string") {
         return res
@@ -69,7 +69,8 @@ module.exports = {
       res.json({ token });
       
     } catch (error) {
-      
+        console.error("Erro no login:", error);
+        res.status(500).json({ message: "Erro interno no servidor." });
     }
   },
 };

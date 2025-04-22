@@ -10,6 +10,16 @@ const app = express()
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+const cors = require("cors");
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
+
 app.use('/auth', apiAuth)
 app.use("/administration", adminRouters);
 app.use("/admin", adminAuthRoute);

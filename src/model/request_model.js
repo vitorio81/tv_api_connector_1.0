@@ -45,14 +45,17 @@ module.exports = {
   },
 
   createRequest: async ({ host, status, validate }) => {
-    const dateTimeRequest = new Date
+   const dateTimeRequest = new Date();
+
     const newRequest = {
       host,
       status,
       validate,
-      dateTimeRequest
+      dateTimeRequest,
     };
-    await query(`INSERT INTO requests (host, status, validate, datetimerequest) VALUES ($1, $2, $3, $4);`, [host, status, validate, dateTimeRequest]
+    await query(
+      `INSERT INTO requests (host, status, validate, datetimerequest) VALUES ($1, $2, $3, $4);`,
+      [host, status, validate, dateTimeRequest]
     );
     return newRequest;
   },
