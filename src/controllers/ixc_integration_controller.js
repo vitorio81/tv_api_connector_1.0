@@ -1,9 +1,8 @@
-// controller.js
 const axios = require("axios");
 const integrations_model = require("../model/integrations_model");
 const request_model = require("../model/request_model");
 
-const tryIntegration = async (req, res) => {
+const tryIntegration = async (req, res, next) => {
   const {
     host: originalHost,
     type,
@@ -12,37 +11,34 @@ const tryIntegration = async (req, res) => {
     password,
   } = req.body;
 
-  let statusRequest = false;
+  try {
+    const integrationList = await integrations_model.getAllIntegrations();
 
-  const integrationList = await integrations_model.getAllIntegrations();
+    for (let integration of integrationList) {
+      try {
+        const response = await axios.post(`${integration.host}`, {
+          host: integration.host,
+          type: integration.type,
+          secret: integration.secret,
+          username,
+          password,
+        });
 
-  for (let integration of integrationList) {
-    try {
-      const response = await axios.post(`${integration.host}`, {
-        host: integration.host,
-        type,
-        secret: integration.secret,
-        username,
-        password,
-      });
+        await request_model.createRequest({
+          host: integration.host,
+          status: "sucesso",
+          validate: response.data.validate,
+        });
 
-      await request_model.createRequest({
-        host: integration.host,
-        status: "sucesso",
-        validate: response.data.validate,
-      });
+        const integrationSecret =
+          await integrations_model.getIntegrationBySecret(integration.secret);
 
-      statusRequest = true;
+        if (!integrationSecret) {
+          return res
+            .status(401)
+            .json({ message: "Token da integração não está autorizado." });
+        }
 
-      const integrationSecret = await integrations_model.getIntegrationBySecret(
-        integration.secret
-      );
-
-      if (!integrationSecret) {
-        return res
-          .status(401)
-          .json({ message: "Token da integração não está autorizado." });
-      } else {
         if (response.data.validate === true) {
           return res.status(200).json({
             host: originalHost,
@@ -53,24 +49,23 @@ const tryIntegration = async (req, res) => {
             validate: true,
           });
         }
+        // se validou === false, continua o loop
+      } catch (error) {
+        await request_model.createRequest({
+          host: integration.host,
+          status: "erro",
+          validate: false,
+        });
+
+        console.error(
+          `Erro ao tentar integração com ${integration.host}:`,
+          error.response?.data || error.message
+        );
+        // continua o loop
       }
-    } catch (error) {
-      await request_model.createRequest({
-        host: integration.host,
-        status: "erro", // Corrigido: se caiu no catch, é um erro
-        validate: false, // Não foi validado com sucesso
-      });
-
-      console.error(error.response?.data || error.message);
-      continue;
     }
-  }
 
-  if (!statusRequest) {
-    return res.status(500).json({
-      message: "Não foi possível integrar com nenhuma API.",
-    });
-  } else {
+    // Se chegou aqui, nenhuma validação passou
     return res.status(200).json({
       host: originalHost,
       secret: originalSecret,
@@ -78,7 +73,11 @@ const tryIntegration = async (req, res) => {
       username,
       password,
       validate: false,
+      message: "Não foi possível integrar com nenhuma API.",
     });
+  } catch (error) {
+    // qualquer erro inesperado no bloco principal vai cair aqui
+    next(error); // chama seu error-middleware.js
   }
 };
 

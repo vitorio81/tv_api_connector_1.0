@@ -1,5 +1,5 @@
 const usersModel = require("../model/users _api_model");
-const { tryIntegration } = require("./ixc_integration_controller");
+const { tryIntegration } = require("../controllers/ixc_integration_controller");
 
 
 module.exports = {
@@ -16,8 +16,7 @@ module.exports = {
                   .status(404)
                   .json({ error: "Password ou username não encontrados!" });
             }
-              await tryIntegration(req, res);
-              return res.json({data: "login efetuado com sucesso!"})
+              await tryIntegration(req, res, next);
             
         } catch (error) {
             next(error)
