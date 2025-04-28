@@ -1,4 +1,4 @@
-const usersModel = require("../model/users _api_model");
+const usersModel = require("../model/users_api_model");
 const { tryIntegration } = require("../controllers/ixc_integration_controller");
 
 

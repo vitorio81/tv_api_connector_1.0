@@ -7,6 +7,6 @@ const pool = new Pool({
 async function query(queryString, params = []) {
     console.log("log: query executada - " + queryString)
     return pool.query(queryString, params);
-}
+}   
 
 module.exports = {query};

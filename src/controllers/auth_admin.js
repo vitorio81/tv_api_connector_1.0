@@ -63,7 +63,7 @@ module.exports = {
       }
 
       const payload = { id: admin.id, email: admin.email };
-      const token = jwt.sign(payload, process.env.JWT_TOKEN_ADMIN, {
+      const token = jwt.si+gn(payload, process.env.JWT_TOKEN_ADMIN, {
         expiresIn: "30m",
       });
       res.json({ token });
