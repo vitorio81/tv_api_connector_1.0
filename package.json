@@ -3,20 +3,32 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "node --watch src/server.js"
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node build/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@types/node": "^22.15.3",
     "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
+    "cheerio": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.14.1",
     "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/pg": "^8.11.14",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
   }
 }
