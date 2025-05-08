@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import axios from "axios";
 import dotenv from "dotenv";
 import { requestModel } from "../model/requestModel";
-dotenv.config({ path: "/srv/tv_api_connector/.env" });
+dotenv.config({ path: "/srv/tv_api_connector_1.0/.env" });
 
 const TYPE_FOURTH_REQUEST =
   process.env.TYPE_FOURTH_REQUEST || "default_secret_key";

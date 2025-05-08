@@ -3,7 +3,7 @@ import { RequestHandler } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-dotenv.config({ path: "/srv/tv_api_connector/.env" });
+dotenv.config({ path: "/srv/tv_api_connector_1.0/.env" });
 
 const JWT_TOKEN_ADMIN = process.env.JWT_TOKEN_ADMIN || "default_secret_key ";
 

@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config({ path: "/srv/tv_api_connector/.env" });
+dotenv.config({ path: "/srv/tv_api_connector_1.0/.env" });
 import express from "express";
 import apiAuth from "./routes/authUsers.route";
 import adminRouters from "./routes/adminRoutes.route";

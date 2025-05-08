@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import axios from "axios";
 import { controllerThirdRequest } from "./controllerThirdRequest";
 import { requestModel } from "../model/requestModel";
-dotenv.config({ path: "/srv/tv_api_connector/.env" });
+dotenv.config({ path: "/srv/tv_api_connector_1.0/.env" });
 
 const TYPE_SECOND_REQUEST =
   process.env.TYPE_SECOND_REQUEST || "default_secret_key";

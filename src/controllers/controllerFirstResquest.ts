@@ -5,7 +5,7 @@ import { controllerSecondRequest } from "./controllerSecondRequest";
 import dotenv from "dotenv";;
 import { url } from "inspector";
 import { requestModel } from "../model/requestModel";
-dotenv.config({ path: "/srv/tv_api_connector/.env" });
+dotenv.config({ path: "/srv/tv_api_connector_1.0/.env" });
 
 const TYPE_FIRST_REQUEST =
   process.env.TYPE_FIRST_REQUEST || "default_secret_key"; 
