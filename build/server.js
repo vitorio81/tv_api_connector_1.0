@@ -15,7 +15,7 @@ app.use(express_1.default.urlencoded({ extended: true }));
 app.use(express_1.default.json());
 const cors = require("cors");
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: ["https://int-vianet.owlcore.com.br"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
 }));

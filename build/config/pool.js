@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.query = query;
 const pg_1 = require("pg");
 const pool = new pg_1.Pool({
-    connectionString: "postgresql://postgres:123456@localhost:5432/banco_tv_conector"
+    connectionString: "postgresql://db:db@131.72.68.243:5432/db",
 });
 function query(queryString_1) {
     return __awaiter(this, arguments, void 0, function* (queryString, params = []) {
