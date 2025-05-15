@@ -13,13 +13,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authAdmin = void 0;
-const adminModel_1 = require("../model/adminModel");
+const AdminModel_1 = require("../model/AdminModel");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config({ path: "/srv/tv_api_connector/.env" });
+dotenv_1.default.config({ path: "/srv/tv_api_connector_1.0/.env" });
 const JWT_TOKEN_ADMIN = process.env.JWT_TOKEN_ADMIN || "default_secret_key ";
-const adminInstModel = new adminModel_1.adminModel({
+const adminInstModel = new AdminModel_1.adminModel({
     id: 0,
     username: "",
     email: "",

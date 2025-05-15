@@ -1,4 +1,4 @@
-import { query } from "../config_database/pool";
+import { query } from "../config/pool";
 
 interface requestModelPayloadAttributes {
   id: number;

@@ -8,128 +8,76 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.controllerFirstResquest = void 0;
-const axios_1 = __importDefault(require("axios"));
-const ixcModel_1 = require("../model/ixcModel");
-const controllerSecondRequest_1 = require("./controllerSecondRequest");
-const dotenv_1 = __importDefault(require("dotenv"));
-;
-const inspector_1 = require("inspector");
-const requestModel_1 = require("../model/requestModel");
-dotenv_1.default.config({ path: "/srv/tv_api_connector/.env" });
-const TYPE_FIRST_REQUEST = process.env.TYPE_FIRST_REQUEST || "default_secret_key";
-const TYPE_LOGIN_USER = process.env.TYPE_LOGIN_USER || "default_secret_key";
-const HOST = process.env.HOST || "default_secret_key";
-const ixcInstModel = new ixcModel_1.ixcModel({
+exports.FirstRequestController = void 0;
+const IxcModel_1 = require("../model/IxcModel");
+const FirstRequestService_1 = require("../services/FirstRequestService");
+const FirtsAcessRequestPayload_1 = require("../model/FirtsAcessRequestPayload");
+const RequestModel_1 = require("../model/RequestModel");
+const ixcInstModel = new IxcModel_1.ixcModel({
     id: 0,
     name: "",
     host: "",
     secret: "",
     idToken: 0,
-    currentDate: new Date,
+    currentDate: new Date(),
 });
-const requestIntModel = new requestModel_1.requestModel({
+const requestIntModel = new RequestModel_1.requestModel({
     id: 0,
     host: "",
     status: "",
     validate: false,
     dateTimerequest: new Date(),
 });
-const controllerFirstResquest = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    const { host, secret: originalSecret, username, password, } = req.body;
+class FirstRequestController {
+}
+exports.FirstRequestController = FirstRequestController;
+_a = FirstRequestController;
+FirstRequestController.handle = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        const { username } = req.authData;
         const integrationList = yield ixcInstModel.getAllIntegrations();
-        for (let integration of integrationList) {
+        if (!integrationList || integrationList.length === 0) {
+            res.status(400).json({ error: "Nenhuma integração cadastrada" });
+            return;
+        }
+        let lastError = null;
+        for (const integration of integrationList) {
             try {
-                console.log("Tentando integração com:", integration.host);
-                console.log("secret:", integration.secret);
-                console.log("token:", integration.idToken);
-                const host = integration.host;
-                const url = `${host.toLowerCase()}/${TYPE_FIRST_REQUEST.toLowerCase()}`;
-                const idIntegration = integration.idToken;
-                const secret = integration.secret;
-                const basicAuthToken = Buffer.from(`${idIntegration}:${secret}`).toString("base64");
-                const headers = {
-                    ixcsoft: "listar",
-                    "Content-Type": "application/json",
-                    Authorization: `Basic ${basicAuthToken}`,
-                };
-                const data = {
-                    qtype: "cliente.hotsite_email",
-                    query: username,
-                    oper: "=",
-                    page: "1",
-                    rp: "20",
-                    sortname: "cliente.id",
-                    sortorder: "desc",
-                };
-                const response = yield axios_1.default.get(`${url}`, {
-                    headers,
-                    data,
+                const basicAuthToken = Buffer.from(`${integration.idToken}:${integration.secret}`).toString("base64");
+                console.log(basicAuthToken);
+                console.log(integration.secret);
+                const payload = FirtsAcessRequestPayload_1.AccessRequestPayload.create(username, basicAuthToken);
+                const result = yield FirstRequestService_1.RequestService.request(payload);
+                yield requestIntModel.createRequest({
+                    host: integration.host,
+                    status: "sucesso",
+                    validate: true,
+                    dateTimerequest: new Date(),
                 });
-                const senhaCliente = response.data.registros[0].senha;
-                console.log("Senha do cliente:", senhaCliente);
-                if (senhaCliente === password) {
-                    req.integrationData = {
-                        host: integration.host,
-                        idIntegration: integration.idToken,
-                        username,
-                        secret: integration.secret,
-                        originalSecret: originalSecret,
-                    };
-                    return (0, controllerSecondRequest_1.controllerSecondRequest)(req, res, next);
-                }
-                else {
-                    yield requestIntModel.createRequest({
-                        host,
-                        status: "sucesso",
-                        validate: false,
-                        dateTimerequest: new Date(),
-                    });
-                    return res.status(200).json({
-                        host: HOST,
-                        type: TYPE_LOGIN_USER,
-                        secret: originalSecret,
-                        username,
-                        validate: false,
-                        message: "Senha ou usuário inválido.",
-                    });
-                }
+                console.log(result);
+                res.status(200).json(result);
+                return;
             }
             catch (error) {
-                console.error(`Erro ao tentar integração com ${inspector_1.url}:`, axios_1.default.isAxiosError(error)
-                    ? (_a = error.response) === null || _a === void 0 ? void 0 : _a.data
-                    : error.message);
+                lastError = error;
                 yield requestIntModel.createRequest({
-                    host,
-                    status: "erro",
+                    host: integration.host,
+                    status: `erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
                     validate: false,
                     dateTimerequest: new Date(),
                 });
             }
         }
-        yield requestIntModel.createRequest({
-            host,
-            status: "sucesso",
-            validate: false,
-            dateTimerequest: new Date(),
-        });
-        return res.status(200).json({
-            host: HOST,
-            type: TYPE_LOGIN_USER,
-            secret: originalSecret,
-            username,
-            validate: false,
-            message: "Cliente não encontrado",
+        res.status(500).json({
+            error: "Todas as integrações falharam",
+            details: lastError instanceof Error ? lastError.message : String(lastError),
+            tried: integrationList.length,
         });
     }
     catch (error) {
+        console.error("Erro geral na controller:", error);
         next(error);
     }
 });
-exports.controllerFirstResquest = controllerFirstResquest;

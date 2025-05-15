@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { requestModel } from "../model/requestModel";
+import { requestModel } from "../model/RequestModel";
 
 const requestIntModel = new requestModel({
   id: 0,

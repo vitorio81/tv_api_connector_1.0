@@ -1,5 +1,5 @@
-import { query } from "../config_database/pool";
-import { ixcModel } from "../model/ixcModel";
+import { query } from "../config/pool";
+import { ixcModel } from "../model/IxcModel";
 import { RequestHandler } from "express";
 
 interface controllerIxcPayloadAttributes {

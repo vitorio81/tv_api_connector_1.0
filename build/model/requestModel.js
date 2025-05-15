@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.requestModel = void 0;
-const pool_1 = require("../config_database/pool");
+const pool_1 = require("../config/pool");
 class requestModel {
     constructor(attributes) {
         this.id = attributes.id;

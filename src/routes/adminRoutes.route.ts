@@ -1,7 +1,7 @@
 import express from "express";
-import { controllerIxc } from "../controllers/controllerIxc";
-import { controllerUser } from "../controllers/controllerUser";
-import { controllerRequest } from "../controllers/controllerRequest";
+import { controllerIxc } from "../controllers/ControllerIxc";
+import { controllerUser } from "../controllers/ControllerUser";
+import { controllerRequest } from "../controllers/ControllerRequest";
 const adminRouters = express.Router();
 
 adminRouters.post("/register/integretion", controllerIxc.register);

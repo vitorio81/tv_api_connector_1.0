@@ -13,9 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.adminModel = void 0;
-const pool_1 = require("../config_database/pool");
+const pool_1 = require("../config/pool");
 const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config({ path: "/srv/tv_api_connector/.env" });
+dotenv_1.default.config({ path: "/srv/tv_api_connector_1.0/.env" });
 class adminModel {
     constructor(attributes) {
         this.id = attributes.id;

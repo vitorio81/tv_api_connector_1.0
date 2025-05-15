@@ -10,8 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authIntegration = void 0;
-const ixcModel_1 = require("../model/ixcModel");
-const integrationsModel = new ixcModel_1.ixcModel({
+const IxcModel_1 = require("../model/IxcModel");
+const integrationsModel = new IxcModel_1.ixcModel({
     id: 0,
     name: "",
     host: "",

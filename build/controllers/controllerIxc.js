@@ -10,9 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.controllerIxc = void 0;
-const pool_1 = require("../config_database/pool");
-const ixcModel_1 = require("../model/ixcModel");
-const ixcInstModel = new ixcModel_1.ixcModel({
+const pool_1 = require("../config/pool");
+const IxcModel_1 = require("../model/IxcModel");
+const ixcInstModel = new IxcModel_1.ixcModel({
     id: 0,
     name: "",
     host: "",

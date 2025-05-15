@@ -4,9 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const authIntegration_1 = require("../controllers/authIntegration");
-const authUserApi_1 = require("../controllers/authUserApi");
+const ControllerFirstResquest_1 = require("../controllers/ControllerFirstResquest");
+const ControllerSecondRequest_1 = require("../controllers/ControllerSecondRequest");
+const ControllerFourthRequest_1 = require("../controllers/ControllerFourthRequest");
+const AuthServiceFirtsRequest_1 = require("../services/AuthServiceFirtsRequest");
+const AuthServiceNextRequest_1 = require("../services/AuthServiceNextRequest");
 const apiAuth = express_1.default.Router();
-apiAuth.post("/login/user", authUserApi_1.authUserApi.login);
-apiAuth.post("/login/integretion", authIntegration_1.authIntegration.login);
+apiAuth.get("/ixc.standard.central.vd_contrato_produto", AuthServiceFirtsRequest_1.authUserApi.login, ControllerFirstResquest_1.FirstRequestController.handle);
+apiAuth.get("/webservice/v1/cliente_contrato", AuthServiceNextRequest_1.nextAuthUserApi.login, ControllerSecondRequest_1.SecondRequesController.handle);
+apiAuth.get("/webservice/v1/cliente_contrato_retornar_produtos_contrato_28145", AuthServiceNextRequest_1.nextAuthUserApi.login, ControllerFourthRequest_1.FourthRequesController.handle);
 exports.default = apiAuth;

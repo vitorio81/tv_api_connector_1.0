@@ -1,33 +1,24 @@
 import axios from "axios";
-import { Request, Response, NextFunction } from "express";
-import {ixcModel} from "../model/ixcModel";
-import { controllerSecondRequest } from "./controllerSecondRequest";
-import dotenv from "dotenv";;
-import { url } from "inspector";
-import { requestModel } from "../model/requestModel";
-dotenv.config({ path: "/srv/tv_api_connector_1.0/.env" });
-
-const TYPE_FIRST_REQUEST =
-  process.env.TYPE_FIRST_REQUEST || "default_secret_key"; 
-const TYPE_LOGIN_USER = process.env.TYPE_LOGIN_USER || "default_secret_key";
-const HOST = process.env.HOST || "default_secret_key";
-
+import { RequestHandler } from "express";
+import { ixcModel } from "../model/IxcModel";
+import { config } from "../config/env";
+import { RequestService } from "../services/FirstRequestService";
+import { AccessRequestPayload } from "../model/FirtsAcessRequestPayload";
+import { requestModel } from "../model/RequestModel";
 
 declare module "express-serve-static-core" {
   interface Request {
     integrationData?: {
       host: string;
-      idIntegration?: number;
       username: string;
-      clientId?: number;
+      password: string;
       secret: string;
-      id?: number;
-      originalSecret: string;
+      id: string;
     };
   }
 }
 
-interface firstRequestPayloadAttributes {
+interface FirstRequestPayloadAttributes {
   host: string;
   secret: string;
   username: string;
@@ -40,8 +31,9 @@ const ixcInstModel = new ixcModel({
   host: "",
   secret: "",
   idToken: 0,
-  currentDate: new Date,
-})
+  currentDate: new Date(),
+});
+
 const requestIntModel = new requestModel({
   id: 0,
   host: "",
@@ -50,120 +42,62 @@ const requestIntModel = new requestModel({
   dateTimerequest: new Date(),
 });
 
-interface ClienteResponse {
-  registros: { senha: string }[];
-}
+export class FirstRequestController {
+  public static handle: RequestHandler = async (req, res, next) => {
+    try {
+      const { username } = req.authData as FirstRequestPayloadAttributes;
+      const integrationList = await ixcInstModel.getAllIntegrations();
 
+      if (!integrationList || integrationList.length === 0) {
+        res.status(400).json({ error: "Nenhuma integração cadastrada" });
+        return;
+      }
 
-export const controllerFirstResquest = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-    const {
-    host,
-    secret: originalSecret,
-    username,
-    password,
-  } = req.body as firstRequestPayloadAttributes;
+      let lastError: any = null;
 
-  try {
-    const integrationList = await ixcInstModel.getAllIntegrations();
-    for (let integration of integrationList) {
-      try {
-        console.log("Tentando integração com:", integration.host);
-        console.log("secret:", integration.secret);
-        console.log("token:", integration.idToken);
-        const host = integration.host;
-        const url = `${host.toLowerCase()}/${TYPE_FIRST_REQUEST.toLowerCase()}`;
-        const idIntegration = integration.idToken;
-        const secret = integration.secret;
-        const basicAuthToken = Buffer.from(`${idIntegration}:${secret}`).toString(
-          "base64"
-        );
+      for (const integration of integrationList) {
+        try {
+          const basicAuthToken = Buffer.from(
+            `${integration.idToken}:${integration.secret}`
+          ).toString("base64");
+          console.log(basicAuthToken);
+          console.log(integration.secret);
 
-        const headers = {
-          ixcsoft: "listar",
-          "Content-Type": "application/json",
-          Authorization: `Basic ${basicAuthToken}`,
-        };
+          const payload = AccessRequestPayload.create(username, basicAuthToken);
 
-        const data = {
-          qtype: "cliente.hotsite_email",
-          query: username,
-          oper: "=",
-          page: "1",
-          rp: "20",
-          sortname: "cliente.id",
-          sortorder: "desc",
-        };
-        const response = await axios.get<ClienteResponse>(`${url}`, {
-          headers,
-          data,
-        });
+          const result = await RequestService.request(payload);
 
-        const senhaCliente = response.data.registros[0].senha;
-        console.log("Senha do cliente:", senhaCliente);
-        if (senhaCliente === password) {
-           req.integrationData = {
-             host: integration.host,
-             idIntegration: integration.idToken,
-             username,
-             secret: integration.secret,
-             originalSecret: originalSecret,
-           };
-          return controllerSecondRequest(req, res, next);
-        } else {
-           await requestIntModel.createRequest({
-             host,
-             status: "sucesso",
-             validate: false,
-             dateTimerequest: new Date(),
-           });
-          return res.status(200).json({
-            host: HOST,
-            type: TYPE_LOGIN_USER,
-            secret: originalSecret,
-            username,
+          await requestIntModel.createRequest({
+            host: integration.host,
+            status: "sucesso",
+            validate: true,
+            dateTimerequest: new Date(),
+          });
+          console.log(result);
+          res.status(200).json(result);
+          return;
+        } catch (error) {
+          lastError = error;
+          await requestIntModel.createRequest({
+            host: integration.host,
+            status: `erro: ${
+              error instanceof Error ? error.message : "Erro desconhecido"
+            }`,
             validate: false,
-            message: "Senha ou usuário inválido.",
+            dateTimerequest: new Date(),
           });
         }
-    
-      } catch (error) {
-        console.error(
-          `Erro ao tentar integração com ${url}:`,
-          axios.isAxiosError(error)
-            ? error.response?.data
-            : (error as Error).message
-        );
-        await requestIntModel.createRequest({
-          host,
-          status: "erro",
-          validate: false,
-          dateTimerequest: new Date(),
-        });
       }
-    }
 
-     await requestIntModel.createRequest({
-       host,
-       status: "sucesso",
-       validate: false,
-       dateTimerequest: new Date(),
-     });
-     
-    return res.status(200).json({
-      host: HOST,
-      type: TYPE_LOGIN_USER,
-      secret: originalSecret,
-      username,
-      validate: false,
-      message: "Cliente não encontrado",
-    });
-    
-  } catch (error) {
-   
-    next(error);
-  }
-};
+      res.status(500).json({
+        error: "Todas as integrações falharam",
+        details:
+          lastError instanceof Error ? lastError.message : String(lastError),
+        tried: integrationList.length,
+      });
+    } catch (error) {
+      console.error("Erro geral na controller:", error);
+      next(error);
+    }
+  };
+}

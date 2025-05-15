@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config({ path: "/srv/tv_api_connector_1.0/.env" });
-import jwt from "jsonwebtoken";
-import { query } from "../config_database/pool";
+import crypto from "crypto";
+import { query } from "../config/pool";
 
 const API_SECRET_TOKEN_KEY =
   process.env.API_SECRET_TOKEN_KEY || "default_secret_key";
@@ -109,7 +109,10 @@ export class userApiModel {
     if (!API_SECRET_TOKEN_KEY) {
       throw new Error("API_SECRET_TOKEN_KEY is not defined");
     }
-    const secret = jwt.sign({ name }, API_SECRET_TOKEN_KEY);
+    const secret = crypto
+      .createHash("sha256")
+      .update(name + API_SECRET_TOKEN_KEY)
+      .digest("hex");
     const endpoint = `${HOST}:${PORT}${TYPE_LOGIN_USER}`;
     const currentDate = new Date();
     const { rows } = await query(

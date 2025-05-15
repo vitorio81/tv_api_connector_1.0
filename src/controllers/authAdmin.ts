@@ -1,4 +1,4 @@
-import { adminModel } from "../model/adminModel";
+import { adminModel } from "../model/AdminModel";
 import { RequestHandler } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";

@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 
 const pool = new Pool({
-    connectionString: "postgresql://postgres:123456@localhost:5432/banco_tv_conector"
+  connectionString: "postgresql://db:db@131.72.68.243:5432/db",
 });
 
 interface QueryParams {

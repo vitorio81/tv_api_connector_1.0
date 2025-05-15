@@ -1,27 +1,35 @@
-import { Request, Response, NextFunction } from "express";
-import axios from "axios";
-import dotenv from "dotenv";
-import { requestModel } from "../model/requestModel";
-dotenv.config({ path: "/srv/tv_api_connector_1.0/.env" });
-
-const TYPE_FOURTH_REQUEST =
-  process.env.TYPE_FOURTH_REQUEST || "default_secret_key";
-const TYPE_LOGIN_USER = process.env.TYPE_LOGIN_USER || "default_secret_key";
-const HOST = process.env.HOST || "default_secret_key";
+import { RequestHandler } from "express";
+import { ixcModel } from "../model/IxcModel";
+import { FourthRequestService } from "../services/FourthRequestService";
+import { FourthAccessRequestPayload } from "../model/FourthAcessRequestPayload";
+import { requestModel } from "../model/RequestModel";
 
 declare module "express-serve-static-core" {
   interface Request {
-    integrationData?: {
-      host: string;
-      idIntegration?: number;
-      username: string;
-      clientId?: number;
-      secret: string;
-      id?: number;
-      originalSecret: string;
+    nextIntegrationData?: {
+      qtype: string;
+      query: string;
+      oper: string;
+      get_id: string;
     };
   }
 }
+
+interface FourthAccessRequestPayAttributes {
+  qtype: string;
+  query: string;
+  oper: string;
+  get_id: string;
+}
+
+const ixcInstModel = new ixcModel({
+  id: 0,
+  name: "",
+  host: "",
+  secret: "",
+  idToken: 0,
+  currentDate: new Date(),
+});
 
 const requestIntModel = new requestModel({
   id: 0,
@@ -31,92 +39,62 @@ const requestIntModel = new requestModel({
   dateTimerequest: new Date(),
 });
 
-interface Registro {
-  vd_contratos_produtos_descricao: string;
-  [key: string]: any;
-}
+export class FourthRequesController {
+  public static handle: RequestHandler = async (req, res, next) => {
+    try {
+      const { get_id } = req.nextAuthData as FourthAccessRequestPayAttributes;
+      const integrationList = await ixcInstModel.getAllIntegrations();
 
-export const controllerFourthRequest = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const {
-    host,
-    idIntegration,
-    username,
-    secret,
-    clientId,
-    id,
-    originalSecret,
-  } = req.integrationData!;
-
-  try {
-    const url = `${host.toLowerCase()}/${TYPE_FOURTH_REQUEST.toLowerCase()}`;
-    const basicAuthToken = Buffer.from(`${idIntegration}:${secret}`).toString(
-      "base64"
-    );
-    const headers = {
-      ixcsoft: "listar",
-      "Content-Type": "application/json",
-      Authorization: `Basic ${basicAuthToken}`,
-    };
-    const data = {
-      get_id: id,
-    };
-
-    const response = await axios.get(url, {
-      headers,
-      data,
-    });
-
-    console.log(host, username, secret, clientId, id);
-    const registrosRaw = response.data.registros[0];
-
-    const registros: Registro[] = registrosRaw as Registro[];
-    const registroNaTvFull = registros.find((item) =>
-      item.vd_contratos_produtos_descricao.startsWith("NaTv")
-    );
-
-    console.log("Plano Tv:", registroNaTvFull?.vd_contratos_produtos_descricao);
-
-    if (registroNaTvFull) {
-      const planoTv = registroNaTvFull.vd_contratos_produtos_descricao;
-      const planoTvJson: {[key: string]: string} ={
-        plano: planoTv
+      if (!integrationList || integrationList.length === 0) {
+        res.status(400).json({ error: "Nenhuma integração cadastrada" });
+        return;
       }
-      await requestIntModel.createRequest({
-             host,
-             status: "sucesso",
-             validate: true,
-             dateTimerequest: new Date(),
-      })
-      return res.status(200).json({
-        host: HOST,
-        type: TYPE_LOGIN_USER,
-        secret: originalSecret,
-        username,
-        validate: true,
-        planoTvJson
+
+      let lastError: any = null;
+
+      for (const integration of integrationList) {
+        try {
+          const basicAuthToken = Buffer.from(
+            `${integration.idToken}:${integration.secret}`
+          ).toString("base64");
+          console.log(basicAuthToken);
+          console.log(integration.secret);
+
+          const payload = FourthAccessRequestPayload.create(get_id, basicAuthToken);
+
+          const result = await FourthRequestService.request(payload);
+
+          await requestIntModel.createRequest({
+            host: integration.host,
+            status: "sucesso",
+            validate: true,
+            dateTimerequest: new Date(),
+          });
+          console.log(result);
+          res.status(200).json(result);
+          return;
+        } catch (error) {
+          lastError = error;
+          await requestIntModel.createRequest({
+            host: integration.host,
+            status: `erro: ${
+              error instanceof Error ? error.message : "Erro desconhecido"
+            }`,
+            validate: false,
+            dateTimerequest: new Date(),
+          });
+        }
+      }
+
+      res.status(500).json({
+        error: "Todas as integrações falharam",
+        details:
+          lastError instanceof Error ? lastError.message : String(lastError),
+        tried: integrationList.length,
       });
-    } else {
-      await requestIntModel.createRequest({
-             host,
-             status: "Not flat",
-             validate: false,
-             dateTimerequest: new Date(),
-      })
-      return res.status(404).json({ message: "Plano de TV não encontrado." });
+    } catch (error) {
+      console.error("Erro geral na controller:", error);
+      next(error);
     }
-  } catch (error) {
-    console.error("Erro na Quarta requisição:", error);
-    await requestIntModel.createRequest({
-      host,
-      status: "error fourth request",
-      validate: false,
-      dateTimerequest: new Date(),
-    });
-    return res.status(500).json({ message: "Erro ao buscar cliente." });
-    
-  }
-};
+  };
+}

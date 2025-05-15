@@ -1,6 +1,6 @@
-import { query } from "../config_database/pool";
+import { query } from "../config/pool";
 import { RequestHandler } from "express";
-import { userApiModel } from "../model/userApiModel";
+import { userApiModel } from "../model/UserApiModel";
 
 interface controllerUserPayloadAttributes {
   name: string;

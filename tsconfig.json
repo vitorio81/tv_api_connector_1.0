@@ -9,8 +9,5 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": [
-    "src",
-    "src/types/express/admin.d.ts",
-]
+  "include": ["src", "src/types/express/admin.d.ts"]
 }

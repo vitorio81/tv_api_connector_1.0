@@ -14,9 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userApiModel = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config({ path: "/srv/tv_api_connector/.env" });
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const pool_1 = require("../config_database/pool");
+dotenv_1.default.config({ path: "/srv/tv_api_connector_1.0/.env" });
+const crypto_1 = __importDefault(require("crypto"));
+const pool_1 = require("../config/pool");
 const API_SECRET_TOKEN_KEY = process.env.API_SECRET_TOKEN_KEY || "default_secret_key";
 const TYPE_LOGIN_USER = process.env.TYPE_LOGIN_USER || "default_secret_key";
 const PORT = process.env.PORT || "default_secret_key";
@@ -86,7 +86,10 @@ class userApiModel {
             if (!API_SECRET_TOKEN_KEY) {
                 throw new Error("API_SECRET_TOKEN_KEY is not defined");
             }
-            const secret = jsonwebtoken_1.default.sign({ name }, API_SECRET_TOKEN_KEY);
+            const secret = crypto_1.default
+                .createHash("sha256")
+                .update(name + API_SECRET_TOKEN_KEY)
+                .digest("hex");
             const endpoint = `${HOST}:${PORT}${TYPE_LOGIN_USER}`;
             const currentDate = new Date();
             const { rows } = yield (0, pool_1.query)(`INSERT INTO users (name, secret, endpoint, currentdate) VALUES ($1, $2, $3, $4) RETURNING id;`, [name, secret, endpoint, currentDate]);

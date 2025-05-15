@@ -10,9 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authUserApi = void 0;
-const controllerFirstResquest_1 = require("./controllerFirstResquest");
-const userApiModel_1 = require("../model/userApiModel");
-const userInstModel = new userApiModel_1.userApiModel({
+const UserApiModel_1 = require("../model/UserApiModel");
+const userInstModel = new UserApiModel_1.userApiModel({
     id: 0,
     name: "",
     secret: "",
@@ -21,7 +20,18 @@ const userInstModel = new userApiModel_1.userApiModel({
 });
 exports.authUserApi = {
     login: ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a, _b;
         try {
+            let host = "";
+            if ((_a = req.body) === null || _a === void 0 ? void 0 : _a.host) {
+                host = req.body.host;
+            }
+            else if ((_b = req.query) === null || _b === void 0 ? void 0 : _b.host) {
+                host = req.query.host;
+            }
+            else if (req.headers["x-host"]) {
+                host = req.headers["x-host"];
+            }
             const authHeader = req.headers.authorization;
             if (!authHeader) {
                 return res.status(401).json({ error: "Authorization header ausente!" });
@@ -47,7 +57,7 @@ exports.authUserApi = {
                     error: "Formato inválido! Use Basic Auth ou 'id:token' no header Authorization.",
                 });
             }
-            const user = yield userInstModel.getUserByContract(token);
+            const user = yield userInstModel.getUserBySecret(token);
             if (!user) {
                 return res.status(403).json({ error: "Token inválido!" });
             }
@@ -74,7 +84,13 @@ exports.authUserApi = {
                     error: "Username e password não podem ser vazios!",
                 });
             }
-            yield (0, controllerFirstResquest_1.controllerFirstResquest)(req, res, next);
+            req.authData = {
+                host,
+                username,
+                password,
+                secret: token,
+            };
+            next();
         }
         catch (error) {
             console.error("Erro no processo de autenticação:", error);

@@ -1,5 +1,3 @@
-import dotenv from "dotenv";
-dotenv.config({ path: "/srv/tv_api_connector_1.0/.env" });
 import express from "express";
 import apiAuth from "./routes/authUsers.route";
 import adminRouters from "./routes/adminRoutes.route";
@@ -15,13 +13,14 @@ app.use(express.json());
 const cors = require("cors");
 app.use(
   cors({
-    origin:"http://131.72.68.243:5173",
+    origin: ["https://int-vianet.owlcore.com.br"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
 
-app.use("/auth", apiAuth);
+
+app.use(apiAuth);
 app.use("/administration", verifyAdminToken, adminRouters);
 app.use("/admin", adminAuthRoute);
 
@@ -31,6 +30,6 @@ const PORT = process.env.PORT || 3000;
 const HOST = getLocalIP();
 app.listen(PORT, () =>
   console.log(
-    `Servidor iniciado no endereço http://${HOST}:3000\nPorta ${PORT}`
+    `Servidor iniciado no endereço https://${HOST}:3000\nPorta ${PORT}`
   )
 );

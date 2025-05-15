@@ -9,27 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.controllerRequest = void 0;
-const RequestModel_1 = require("../model/RequestModel");
-const requestIntModel = new RequestModel_1.requestModel({
-    id: 0,
-    host: "",
-    status: "",
-    validate: false,
-    dateTimerequest: new Date(),
+exports.query = query;
+const pg_1 = require("pg");
+const pool = new pg_1.Pool({
+    connectionString: "postgresql://postgres:123456@localhost:5432/banco_tv_conector"
 });
-exports.controllerRequest = {
-    index: ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-        const admin = req.admin;
-        try {
-            const request = yield requestIntModel.getAllRequests();
-            return res.json({
-                data: request,
-                adminEmail: admin ? admin.email : null,
-            });
-        }
-        catch (error) {
-            next(error);
-        }
-    })),
-};
+function query(queryString_1) {
+    return __awaiter(this, arguments, void 0, function* (queryString, params = []) {
+        console.log("log: query executada - " + queryString);
+        return pool.query(queryString, params);
+    });
+}

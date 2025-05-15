@@ -1,4 +1,4 @@
-import { ixcModel } from "../model/ixcModel";
+import { ixcModel } from "../model/IxcModel";
 import { RequestHandler } from "express";
 
 interface authIntegrationPayloadAttributes {

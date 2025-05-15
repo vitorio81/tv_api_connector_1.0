@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.verifyAdminToken = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config({ path: "/srv/tv_api_connector/.env" });
+dotenv_1.default.config({ path: "/srv/tv_api_connector_1.0/.env" });
 const JWT_TOKEN_ADMIN = process.env.JWT_TOKEN_ADMIN || "default_secret_key ";
 const verifyAdminToken = (req, res, next) => {
     const authHeader = req.headers.authorization;

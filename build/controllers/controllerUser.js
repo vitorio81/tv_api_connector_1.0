@@ -10,9 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.controllerUser = void 0;
-const pool_1 = require("../config_database/pool");
-const userApiModel_1 = require("../model/userApiModel");
-const userModel = new userApiModel_1.userApiModel({
+const pool_1 = require("../config/pool");
+const UserApiModel_1 = require("../model/UserApiModel");
+const userModel = new UserApiModel_1.userApiModel({
     id: 0,
     name: "",
     secret: "",
