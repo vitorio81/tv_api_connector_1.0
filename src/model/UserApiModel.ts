@@ -1,14 +1,7 @@
-import dotenv from "dotenv";
-dotenv.config({ path: "/srv/tv_api_connector_1.0/.env" });
+import { config } from "../config/env";
 import crypto from "crypto";
 import { query } from "../config/pool";
 
-const API_SECRET_TOKEN_KEY =
-  process.env.API_SECRET_TOKEN_KEY || "default_secret_key";
-
-const TYPE_LOGIN_USER = process.env.TYPE_LOGIN_USER || "default_secret_key";
-const PORT = process.env.PORT || "default_secret_key";
-const HOST = process.env.HOST || "default_secret_key";
 
 interface userApiModelPayloadAttributes {
   id: number;
@@ -106,14 +99,14 @@ export class userApiModel {
     >
   ): Promise<userApiModelPayloadAttributes> {
     const { name } = attributes;
-    if (!API_SECRET_TOKEN_KEY) {
+    if (!config.apiSecretTokenKey) {
       throw new Error("API_SECRET_TOKEN_KEY is not defined");
     }
     const secret = crypto
       .createHash("sha256")
-      .update(name + API_SECRET_TOKEN_KEY)
+      .update(name + config.apiSecretTokenKey)
       .digest("hex");
-    const endpoint = `${HOST}:${PORT}${TYPE_LOGIN_USER}`;
+    const endpoint = `${config.host}/${config.typeEndPoint}`;
     const currentDate = new Date();
     const { rows } = await query(
       `INSERT INTO users (name, secret, endpoint, currentdate) VALUES ($1, $2, $3, $4) RETURNING id;`,

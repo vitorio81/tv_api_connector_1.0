@@ -2,10 +2,8 @@ import { adminModel } from "../model/AdminModel";
 import { RequestHandler } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-dotenv.config({ path: "/srv/tv_api_connector_1.0/.env" });
+import { config } from "../config/env";
 
-const JWT_TOKEN_ADMIN = process.env.JWT_TOKEN_ADMIN || "default_secret_key ";
 
 interface authAdminPayloadAttributes {
   username: string;
@@ -76,11 +74,11 @@ export const authAdmin = {
       if (!isValidPassword) {
         return res.status(401).json({ message: "Senha incorreta!" });
       }
-      if (!JWT_TOKEN_ADMIN) {
+      if (!config.jwtTokenAdmin) {
         return res.status(401).json({ message: "Java secreta não fornecida!" });
       }
       const payload = { id: admin.id, email: admin.email, username: admin.username};
-      const token = jwt.sign(payload, JWT_TOKEN_ADMIN, {
+      const token = jwt.sign(payload, config.jwtTokenAdmin, {
         expiresIn: "30m",
       });
       res.json({ token, username: admin.username });

@@ -17,6 +17,7 @@ declare module "express-serve-static-core" {
       query: string;
       oper: string;
       get_id: string;
+      token: string;
     };
   }
 }
@@ -98,6 +99,7 @@ export const nextAuthUserApi = {
         qtype: qtype ?? "",
         query: query ?? "",
         get_id: get_id ?? "",
+        token
       };
       next();
     } catch (error) {

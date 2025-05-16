@@ -13,19 +13,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SecondRequestService = void 0;
-const env_1 = require("../config/env");
 const axios_1 = __importDefault(require("axios"));
 class SecondRequestService {
     static request(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
-            if (!env_1.config.hostIntegration)
-                throw new Error("Host não configurado");
-            if (!env_1.config.typeSecondRequest)
-                throw new Error("Type não configurado");
-            const url = `${env_1.config.hostIntegration.toLowerCase()}/${env_1.config.typeSecondRequest.toLowerCase()}`;
             try {
-                const response = yield axios_1.default.get(url, {
+                const response = yield axios_1.default.get(payload.url, {
                     headers: payload.headers,
                     data: payload.data,
                 });
@@ -35,7 +29,7 @@ class SecondRequestService {
             catch (error) {
                 if (axios_1.default.isAxiosError(error)) {
                     console.error("Detalhes do erro IXC:", {
-                        url,
+                        url: payload.url,
                         status: (_a = error.response) === null || _a === void 0 ? void 0 : _a.status,
                         data: (_b = error.response) === null || _b === void 0 ? void 0 : _b.data,
                         config: error.config,

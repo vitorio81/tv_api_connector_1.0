@@ -13,14 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userApiModel = void 0;
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config({ path: "/srv/tv_api_connector_1.0/.env" });
+const env_1 = require("../config/env");
 const crypto_1 = __importDefault(require("crypto"));
 const pool_1 = require("../config/pool");
-const API_SECRET_TOKEN_KEY = process.env.API_SECRET_TOKEN_KEY || "default_secret_key";
-const TYPE_LOGIN_USER = process.env.TYPE_LOGIN_USER || "default_secret_key";
-const PORT = process.env.PORT || "default_secret_key";
-const HOST = process.env.HOST || "default_secret_key";
 class userApiModel {
     constructor(attributes) {
         this.id = attributes.id;
@@ -83,14 +78,14 @@ class userApiModel {
     createUser(attributes) {
         return __awaiter(this, void 0, void 0, function* () {
             const { name } = attributes;
-            if (!API_SECRET_TOKEN_KEY) {
+            if (!env_1.config.apiSecretTokenKey) {
                 throw new Error("API_SECRET_TOKEN_KEY is not defined");
             }
             const secret = crypto_1.default
                 .createHash("sha256")
-                .update(name + API_SECRET_TOKEN_KEY)
+                .update(name + env_1.config.apiSecretTokenKey)
                 .digest("hex");
-            const endpoint = `${HOST}:${PORT}${TYPE_LOGIN_USER}`;
+            const endpoint = `${env_1.config.host}/${env_1.config.typeEndPoint}`;
             const currentDate = new Date();
             const { rows } = yield (0, pool_1.query)(`INSERT INTO users (name, secret, endpoint, currentdate) VALUES ($1, $2, $3, $4) RETURNING id;`, [name, secret, endpoint, currentDate]);
             const id = rows[0].id;

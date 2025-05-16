@@ -1,16 +1,11 @@
-import { config } from "../config/env";
 import axios  from "axios"
 import { SecondAccessRequestPayload } from "../model/SecondAcessRequestPayload";
 
 export class SecondRequestService {
   static async request(payload: SecondAccessRequestPayload) {
-    if (!config.hostIntegration) throw new Error("Host não configurado");
-    if (!config.typeSecondRequest) throw new Error("Type não configurado");
-
-    const url = `${config.hostIntegration.toLowerCase()}/${config.typeSecondRequest.toLowerCase()}`;
 
     try {
-      const response = await axios.get(url, {
+      const response = await axios.get(payload.url, {
         headers: payload.headers as unknown as Record<string, string>,
         data: payload.data,
       });
@@ -20,7 +15,7 @@ export class SecondRequestService {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("Detalhes do erro IXC:", {
-          url,
+          url: payload.url,
           status: error.response?.status,
           data: error.response?.data,
           config: error.config,

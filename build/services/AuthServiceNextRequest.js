@@ -79,6 +79,7 @@ exports.nextAuthUserApi = {
                 qtype: qtype !== null && qtype !== void 0 ? qtype : "",
                 query: query !== null && query !== void 0 ? query : "",
                 get_id: get_id !== null && get_id !== void 0 ? get_id : "",
+                token
             };
             next();
         }

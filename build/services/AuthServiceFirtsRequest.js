@@ -85,10 +85,8 @@ exports.authUserApi = {
                 });
             }
             req.authData = {
-                host,
                 username,
-                password,
-                secret: token,
+                token
             };
             next();
         }

@@ -1,5 +1,3 @@
-import dotenv from "dotenv";
-dotenv.config({ path: "/srv/tv_api_connector_1.0/.env" });
 import { query } from "../config/pool";
 
 interface ixcModelPayloadAttributes {

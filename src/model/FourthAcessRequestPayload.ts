@@ -1,5 +1,4 @@
-// model/AccessRequestPayload.ts
-
+import { config } from "../config/env";
 export interface AccessRequestData {
   get_id: string;
 }
@@ -13,19 +12,25 @@ export interface AccessRequestHeaders {
 export interface AccessRequestPayloadType {
   data: AccessRequestData;
   headers: AccessRequestHeaders;
+  url: string;
 }
 
 export class FourthAccessRequestPayload {
   data: AccessRequestData;
   headers: AccessRequestHeaders;
+  url : string
   private constructor(attributes: AccessRequestPayloadType) {
     this.data = attributes.data;
     this.headers = attributes.headers;
+    this.url = attributes.url;
   }
   static create(
     get_id: string,
-    basicAuthToken: string
+    basicAuthToken: string,
+    host: string
   ): AccessRequestPayloadType {
+    if (!config.typeFourthRequest) throw new Error("Type não configurado");
+    const url = `${host.toLowerCase()}/${config.typeFourthRequest.toLowerCase()}`;
     const data: AccessRequestData = {
       get_id: get_id,
     };
@@ -36,6 +41,6 @@ export class FourthAccessRequestPayload {
       Authorization: `Basic ${basicAuthToken}`,
     };
 
-    return { data, headers };
+    return { data, headers, url };
   }
 }

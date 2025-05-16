@@ -16,9 +16,7 @@ exports.authAdmin = void 0;
 const AdminModel_1 = require("../model/AdminModel");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config({ path: "/srv/tv_api_connector_1.0/.env" });
-const JWT_TOKEN_ADMIN = process.env.JWT_TOKEN_ADMIN || "default_secret_key ";
+const env_1 = require("../config/env");
 const adminInstModel = new AdminModel_1.adminModel({
     id: 0,
     username: "",
@@ -75,11 +73,11 @@ exports.authAdmin = {
             if (!isValidPassword) {
                 return res.status(401).json({ message: "Senha incorreta!" });
             }
-            if (!JWT_TOKEN_ADMIN) {
+            if (!env_1.config.jwtTokenAdmin) {
                 return res.status(401).json({ message: "Java secreta não fornecida!" });
             }
             const payload = { id: admin.id, email: admin.email, username: admin.username };
-            const token = jsonwebtoken_1.default.sign(payload, JWT_TOKEN_ADMIN, {
+            const token = jsonwebtoken_1.default.sign(payload, env_1.config.jwtTokenAdmin, {
                 expiresIn: "30m",
             });
             res.json({ token, username: admin.username });

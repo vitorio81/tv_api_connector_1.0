@@ -1,26 +1,20 @@
 import { RequestHandler } from "express";
 import { userApiModel } from "../model/UserApiModel";
 
-// PRECISO REFAZER O BACK END PARA MELHORAR O FLUXO DOS PROCESSOS
-// PRECISO FAZER UMA ROTA PARA CADA REQUISIÇÃO USANDO O TYPE DO IXC
-// TESTAR AS CONEXÇÕES E O BUILD PARA FAZER FUNCIONAR O START
+declare module "express-serve-static-core" {
+  interface Request {
+    authData?: {
+      username: string;
+      token: string;
+    };
+  }
+}
 
 interface authApiModelPayloadAttributes {
   username: string;
   secret: string;
   password: string;
   host?: string;
-}
-
-declare module "express-serve-static-core" {
-  interface Request {
-    authData?: {
-      host: string;
-      username: string;
-      password: string;
-      secret: string;
-    };
-  }
 }
 
 const userInstModel = new userApiModel({
@@ -108,10 +102,8 @@ export const authUserApi = {
         });
       }
       req.authData = {
-        host,
         username,
-        password,
-        secret: token,
+        token
       };
       next();
     } catch (error) {

@@ -38,7 +38,7 @@ export const controllerIxc = {
       );
       const existingIntegrationSecret =
         await ixcInstModel.getIntegrationBySecre(secret);
-      if (!existingIntegrationName || !existingIntegrationSecret) {
+      if (!existingIntegrationName && !existingIntegrationSecret) {
         const newIntegration = await ixcInstModel.createIntegration({
           name,
           host,
@@ -47,7 +47,7 @@ export const controllerIxc = {
         });
         return res.status(200).json(newIntegration);
       } else {
-        return res.status(400).json({ error: "Integração já existente!" });
+        return res.status(400).json({ error: "Integração já existente, verifique o token ou name!" });
       }
     } catch (error) {
       next(error);

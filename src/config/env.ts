@@ -5,9 +5,9 @@ dotenv.config({ path: __dirname + "/../../.env" });
 export const config = {
   port: process.env.PORT,
   host: process.env.HOST,
-  hostIntegration: process.env.INTEGRATIONS_HOST,
   jwtTokenAdmin: process.env.JWT_TOKEN_ADMIN,
   apiSecretTokenKey: process.env.API_SECRET_TOKEN_KEY,
+  typeEndPoint: process.env.TYPE_ENDPOINT,
   typeFirtsRequest: process.env.TYPE_FIRST_REQUEST,
   typeSecondRequest: process.env.TYPE_SECOND_REQUEST,
   typeFourthRequest: process.env.TYPE_FOURTH_REQUEST,

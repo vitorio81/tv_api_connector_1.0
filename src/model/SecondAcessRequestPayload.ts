@@ -1,5 +1,4 @@
-// model/AccessRequestPayload.ts
-
+import { config } from "../config/env";
 export interface AccessRequestData {
   qtype: string;
   query: string;
@@ -15,19 +14,26 @@ export interface AccessRequestHeaders {
 export interface AccessRequestPayloadType {
   data: AccessRequestData;
   headers: AccessRequestHeaders;
+  url: string;
 }
 
 export class SecondAccessRequestPayload {
   data: AccessRequestData;
   headers: AccessRequestHeaders;
+  url: string;
   private constructor(attributes: AccessRequestPayloadType) {
     this.data = attributes.data;
     this.headers = attributes.headers;
+    this.url = attributes.url;
   }
   static create(
     query: string,
-    basicAuthToken: string
+    basicAuthToken: string,
+    host: string
   ): AccessRequestPayloadType {
+    if (!config.typeSecondRequest) throw new Error("Type não configurado");
+
+    const url = `${host.toLowerCase()}/${config.typeSecondRequest.toLowerCase()}`;
     const data: AccessRequestData = {
       qtype: "cliente_contrato.id_cliente",
       query: query,
@@ -40,6 +46,6 @@ export class SecondAccessRequestPayload {
       Authorization: `Basic ${basicAuthToken}`,
     };
 
-    return { data, headers };
+    return { data, headers, url };
   }
 }

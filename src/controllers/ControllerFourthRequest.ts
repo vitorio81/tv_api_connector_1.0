@@ -1,8 +1,8 @@
 import { RequestHandler } from "express";
-import { ixcModel } from "../model/IxcModel";
 import { FourthRequestService } from "../services/FourthRequestService";
 import { FourthAccessRequestPayload } from "../model/FourthAcessRequestPayload";
 import { requestModel } from "../model/RequestModel";
+import { getIntegration } from "../services/IntegrationStore";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -11,6 +11,7 @@ declare module "express-serve-static-core" {
       query: string;
       oper: string;
       get_id: string;
+      token: string;
     };
   }
 }
@@ -20,16 +21,9 @@ interface FourthAccessRequestPayAttributes {
   query: string;
   oper: string;
   get_id: string;
+  token: string;
 }
 
-const ixcInstModel = new ixcModel({
-  id: 0,
-  name: "",
-  host: "",
-  secret: "",
-  idToken: 0,
-  currentDate: new Date(),
-});
 
 const requestIntModel = new requestModel({
   id: 0,
@@ -40,61 +34,68 @@ const requestIntModel = new requestModel({
 });
 
 export class FourthRequesController {
-  public static handle: RequestHandler = async (req, res, next) => {
+  public static handle: RequestHandler = async (
+    req: import("express").Request,
+    res: import("express").Response,
+    next: import("express").NextFunction
+  ): Promise<void> => {
     try {
-      const { get_id } = req.nextAuthData as FourthAccessRequestPayAttributes;
-      const integrationList = await ixcInstModel.getAllIntegrations();
-
-      if (!integrationList || integrationList.length === 0) {
-        res.status(400).json({ error: "Nenhuma integração cadastrada" });
+      if (!req.nextAuthData) {
+        res.status(400).json({ error: "Dados de autenticação ausentes!" });
         return;
       }
 
-      let lastError: any = null;
+      const { get_id, token } =
+        req.nextAuthData as FourthAccessRequestPayAttributes;
 
-      for (const integration of integrationList) {
-        try {
-          const basicAuthToken = Buffer.from(
-            `${integration.idToken}:${integration.secret}`
-          ).toString("base64");
-          console.log(basicAuthToken);
-          console.log(integration.secret);
-
-          const payload = FourthAccessRequestPayload.create(get_id, basicAuthToken);
-
-          const result = await FourthRequestService.request(payload);
-
-          await requestIntModel.createRequest({
-            host: integration.host,
-            status: "sucesso",
-            validate: true,
-            dateTimerequest: new Date(),
-          });
-          console.log(result);
-          res.status(200).json(result);
-          return;
-        } catch (error) {
-          lastError = error;
-          await requestIntModel.createRequest({
-            host: integration.host,
-            status: `erro: ${
-              error instanceof Error ? error.message : "Erro desconhecido"
-            }`,
-            validate: false,
-            dateTimerequest: new Date(),
-          });
-        }
+      const integration = getIntegration(token);
+      if (!integration) {
+        res
+          .status(404)
+          .json({ error: "Integração não encontrada para esse token." });
+        return;
       }
+      const host = integration.host;
+      const basicAuthToken = integration.secret;
 
-      res.status(500).json({
-        error: "Todas as integrações falharam",
-        details:
-          lastError instanceof Error ? lastError.message : String(lastError),
-        tried: integrationList.length,
-      });
+      try {
+        const payload = await FourthAccessRequestPayload.create(
+          get_id,
+          basicAuthToken,
+          host
+        );
+        const result = await FourthRequestService.request(payload);
+
+        await requestIntModel.createRequest({
+          host: host,
+          status: "sucesso",
+          validate: true,
+          dateTimerequest: new Date(),
+        });
+        console.log(result);
+        res.status(200).json(result);
+        return;
+      } catch (error: unknown) {
+        console.error("Erro na requisição:", error);
+
+        await requestIntModel.createRequest({
+          host,
+          status: `erro: ${
+            error instanceof Error ? error.message : "Erro desconhecido"
+          }`,
+          validate: false,
+          dateTimerequest: new Date(),
+        });
+
+        res.status(500).json({
+          error: "Falha na integração",
+          details: error instanceof Error ? error.message : String(error),
+          integrationHost: host,
+        });
+      }
     } catch (error) {
       console.error("Erro geral na controller:", error);
       next(error);
     }
   };
-}
+};
