@@ -36,7 +36,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.config = void 0;
 // config/env.ts
 const dotenv = __importStar(require("dotenv"));
-dotenv.config({ path: __dirname + "/../../.env" });
+const path = __importStar(require("path"));
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 exports.config = {
     port: process.env.PORT,
     host: process.env.HOST,

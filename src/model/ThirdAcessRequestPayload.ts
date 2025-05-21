@@ -1,13 +1,8 @@
 import { config } from "../config/env";
-
 export interface AccessRequestData {
   qtype: string;
   query: string;
   oper: string;
-  page: string;
-  rp: string;
-  sortname: string;
-  sortorder: string;
 }
 
 export interface AccessRequestHeaders {
@@ -22,7 +17,7 @@ export interface AccessRequestPayloadType {
   url: string;
 }
 
-export class AccessRequestPayload {
+export class ThirdAccessRequestPayload {
   data: AccessRequestData;
   headers: AccessRequestHeaders;
   url: string;
@@ -36,16 +31,13 @@ export class AccessRequestPayload {
     basicAuthToken: string,
     host: string
   ): AccessRequestPayloadType {
-    if (!config.typeFirtsRequest) throw new Error("Type não configurado");
-    const url = `${host.toLowerCase()}/${config.typeFirtsRequest.toLowerCase()}`;
+    if (!config.typeSecondRequest) throw new Error("Type não configurado");
+
+    const url = `${host.toLowerCase()}/${config.typeSecondRequest.toLowerCase()}`;
     const data: AccessRequestData = {
-      qtype: "cliente.hotsite_email",
+      qtype: "cliente_contrato.id_cliente",
       query: query,
       oper: "=",
-      page: "1",
-      rp: "20",
-      sortname: "cliente.id",
-      sortorder: "desc",
     };
 
     const headers: AccessRequestHeaders = {

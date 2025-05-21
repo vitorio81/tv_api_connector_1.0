@@ -86,9 +86,9 @@ export const nextAuthUserApi = {
       }
 
       const payload: Partial<authApiModelPayloadAttributes> = req.body;
-      const { oper, qtype, query, get_id } = payload;
+      const { oper, qtype, query, get_id} = payload;
 
-      if (!query && !get_id) {
+      if (!query && !get_id ) {
         return res.status(400).json({
           error: "Todos os dados são obrigatórios!",
         });

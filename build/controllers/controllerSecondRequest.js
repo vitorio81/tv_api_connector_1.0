@@ -10,11 +10,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SecondRequesController = void 0;
-const SecondRequestService_1 = require("../services/SecondRequestService ");
+exports.SecondRequestController = void 0;
+const IntegrationStore_1 = require("../services/IntegrationStore");
+const IxcModel_1 = require("../model/IxcModel");
+const SecondRequestService_1 = require("../services/SecondRequestService");
 const SecondAcessRequestPayload_1 = require("../model/SecondAcessRequestPayload");
 const RequestModel_1 = require("../model/RequestModel");
-const IntegrationStore_1 = require("../services/IntegrationStore");
+const ixcInstModel = new IxcModel_1.ixcModel({
+    id: 0,
+    name: "",
+    host: "",
+    secret: "",
+    idToken: 0,
+    currentDate: new Date(),
+});
 const requestIntModel = new RequestModel_1.requestModel({
     id: 0,
     host: "",
@@ -22,51 +31,64 @@ const requestIntModel = new RequestModel_1.requestModel({
     validate: false,
     dateTimerequest: new Date(),
 });
-class SecondRequesController {
+class SecondRequestController {
 }
-exports.SecondRequesController = SecondRequesController;
-_a = SecondRequesController;
-SecondRequesController.handle = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.SecondRequestController = SecondRequestController;
+_a = SecondRequestController;
+SecondRequestController.handle = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (!req.nextAuthData) {
-            res.status(400).json({ error: "Dados de autenticação ausentes!" });
-            return;
-        }
+        console.log("Iniciando handle");
         const { query, token } = req.nextAuthData;
-        const integration = (0, IntegrationStore_1.getIntegration)(token);
-        if (!integration) {
-            res
-                .status(404)
-                .json({ error: "Integração não encontrada para esse token." });
+        const integrationList = yield ixcInstModel.getAllIntegrations();
+        console.log(`Total de integrações: ${integrationList.length}`);
+        if (!integrationList || integrationList.length === 0) {
+            res.status(400).json({ error: "Nenhuma integração cadastrada" });
             return;
         }
-        const host = integration.host;
-        const basicAuthToken = integration.secret;
-        try {
-            const payload = SecondAcessRequestPayload_1.SecondAccessRequestPayload.create(query, basicAuthToken, host);
-            const result = yield SecondRequestService_1.SecondRequestService.request(payload);
-            yield requestIntModel.createRequest({
-                host,
-                status: "sucesso",
-                validate: true,
-                dateTimerequest: new Date(),
-            });
-            res.status(200).json(result);
+        let lastError = null;
+        for (const [index, integration] of integrationList.entries()) {
+            try {
+                console.log(`Processando integração ${index + 1}/${integrationList.length}: ${integration.host}`);
+                const basicAuthToken = Buffer.from(`${integration.idToken}:${integration.secret}`).toString("base64");
+                console.log("Token gerado:", basicAuthToken);
+                const host = integration.host;
+                const payload = SecondAcessRequestPayload_1.AccessRequestPayload.create(query, basicAuthToken, host);
+                console.log("Payload antes da requisição:", payload);
+                const result = yield SecondRequestService_1.RequestService.request(payload);
+                console.log("Resultado da requisição:", result);
+                if ((result === null || result === void 0 ? void 0 : result.total) === 1) {
+                    yield requestIntModel.createRequest({
+                        host: integration.host,
+                        status: "sucesso",
+                        validate: true,
+                        dateTimerequest: new Date(),
+                    });
+                    console.log("Resultado válido encontrado, retornando...");
+                    const host = integration.host;
+                    const secret = basicAuthToken;
+                    const tokenId = token;
+                    (0, IntegrationStore_1.setIntegration)(tokenId, host, secret);
+                    res.status(200).json(result);
+                    return;
+                }
+            }
+            catch (error) {
+                console.error(`Erro na integração ${integration.host}:`, error);
+                lastError = error;
+                yield requestIntModel.createRequest({
+                    host: integration.host,
+                    status: `erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
+                    validate: false,
+                    dateTimerequest: new Date(),
+                });
+            }
         }
-        catch (error) {
-            console.error("Erro na requisição:", error);
-            yield requestIntModel.createRequest({
-                host,
-                status: `erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
-                validate: false,
-                dateTimerequest: new Date(),
-            });
-            res.status(500).json({
-                error: "Falha na integração",
-                details: error instanceof Error ? error.message : String(error),
-                integrationHost: host,
-            });
-        }
+        console.log("Todas as integrações foram processadas");
+        res.status(500).json({
+            error: "Todas as integrações falharam",
+            details: lastError instanceof Error ? lastError.message : String(lastError),
+            tried: integrationList.length,
+        });
     }
     catch (error) {
         console.error("Erro geral na controller:", error);

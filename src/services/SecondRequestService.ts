@@ -1,15 +1,15 @@
-import axios  from "axios"
-import { SecondAccessRequestPayload } from "../model/SecondAcessRequestPayload";
+import axios from "axios";
+import { AccessRequestPayload } from "../model/FirtsAcessRequestPayload";
 
-export class SecondRequestService {
-  static async request(payload: SecondAccessRequestPayload) {
-
+export class RequestService {
+  static async request(payload: AccessRequestPayload) {
     try {
-      const response = await axios.get(payload.url, {
+      const response = await axios.post(payload.url, payload.data, {
         headers: payload.headers as unknown as Record<string, string>,
-        data: payload.data,
       });
       console.log(payload.headers);
+      console.log(payload.url)
+      console.log(payload)
 
       return response.data;
     } catch (error) {

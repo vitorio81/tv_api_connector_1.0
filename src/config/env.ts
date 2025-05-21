@@ -1,6 +1,7 @@
 // config/env.ts
 import * as dotenv from "dotenv";
-dotenv.config({ path: __dirname + "/../../.env" });
+import * as path from "path";
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 export const config = {
   port: process.env.PORT,
