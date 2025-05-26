@@ -19,6 +19,21 @@ app.use(
   })
 );
 
+app.use((req, res, next) => {
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+  const userAgent = req.headers["user-agent"];
+  const origin = req.headers["origin"] || req.headers["referer"];
+
+  console.log("======= NOVA REQUISIÇÃO =======");
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  console.log("IP:", ip);
+  console.log("User-Agent:", userAgent);
+  console.log("Origin/Referer:", origin);
+  console.log("Headers:", req.headers);
+  console.log("================================");
+
+  next();
+});
 
 app.use(apiAuth);
 app.use("/administration", verifyAdminToken, adminRouters);
