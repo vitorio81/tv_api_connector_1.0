@@ -6,20 +6,16 @@ import { getIntegration } from "../services/IntegrationStore";
 
 declare module "express-serve-static-core" {
   interface Request {
-    nextIntegrationData?: {
-      qtype: string;
-      query: string;
-      oper: string;
-      get_id: string;
+    authData?: {
+      username?: string;
+      password?: string;
       token: string;
+      get_id?: string;
     };
   }
 }
 
 interface FourthAccessRequestPayAttributes {
-  qtype: string;
-  query: string;
-  oper: string;
   get_id: string;
   token: string;
 }
@@ -40,13 +36,13 @@ export class FourthRequesController {
     next: import("express").NextFunction
   ): Promise<void> => {
     try {
-      if (!req.nextAuthData) {
+      if (!req.authData) {
         res.status(400).json({ error: "Dados de autenticação ausentes!" });
         return;
       }
 
       const { get_id, token } =
-        req.nextAuthData as FourthAccessRequestPayAttributes;
+        req.authData as FourthAccessRequestPayAttributes;
 
       const integration = getIntegration(token);
       if (!integration) {
@@ -65,6 +61,7 @@ export class FourthRequesController {
           host
         );
         const result = await FourthRequestService.request(payload);
+        console.log("Resultado da requisição:", result);
 
         await requestIntModel.createRequest({
           host: host,

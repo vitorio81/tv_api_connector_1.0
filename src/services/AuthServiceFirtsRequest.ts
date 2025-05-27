@@ -4,17 +4,20 @@ import { userApiModel } from "../model/UserApiModel";
 declare module "express-serve-static-core" {
   interface Request {
     authData?: {
-      username: string;
+      username?: string;
+      password?: string;
       token: string;
+      get_id?: string;
     };
   }
 }
 
-interface authApiModelPayloadAttributes {
+interface AuthApiPayload {
   username: string;
   secret: string;
   password: string;
   host?: string;
+  get_id: string;
 }
 
 const userInstModel = new userApiModel({
@@ -25,86 +28,73 @@ const userInstModel = new userApiModel({
   currentDate: new Date(),
 });
 
+function extractHost(req: any): string {
+  return (
+    req.body?.host || req.query?.host || (req.headers["x-host"] as string) || ""
+  );
+}
+
+function parseAuthorizationHeader(
+  header: string | undefined
+): { id: string; token: string } | null {
+  if (!header) return null;
+
+  if (header.startsWith("Basic ")) {
+    try {
+      const base64Credentials = header.split(" ")[1];
+      const credentials = Buffer.from(base64Credentials, "base64").toString(
+        "ascii"
+      );
+      const [id, token] = credentials.split(":");
+      if (!id || !token) return null;
+      return { id, token };
+    } catch {
+      return null;
+    }
+  }
+
+  const [id, token] = header.split(":");
+  return id && token ? { id, token } : null;
+}
+
 export const authUserApi = {
   login: (async (req, res, next) => {
     try {
-      let host = "";
-
-      if (req.body?.host) {
-        host = req.body.host;
-      } else if (req.query?.host) {
-        host = req.query.host as string;
-      } else if (req.headers["x-host"]) {
-        host = req.headers["x-host"] as string;
-      }
-
+      const host = extractHost(req);
       const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        return res.status(401).json({ error: "Authorization header ausente!" });
-      }
 
-      let id: string, token: string;
-
-      if (authHeader.startsWith("Basic ")) {
-        try {
-          const base64Credentials = authHeader.split(" ")[1];
-          const credentials = Buffer.from(base64Credentials, "base64").toString(
-            "ascii"
-          );
-          [id, token] = credentials.split(":");
-        } catch (error) {
-          return res
-            .status(401)
-            .json({ error: "Formato Basic Auth inválido!" });
-        }
-      } else {
-        [id, token] = authHeader.split(":");
-      }
-
-      if (!id || !token) {
+      const parsedAuth = parseAuthorizationHeader(authHeader);
+      if (!parsedAuth) {
         return res.status(401).json({
           error:
-            "Formato inválido! Use Basic Auth ou 'id:token' no header Authorization.",
+            "Cabeçalho Authorization inválido! Use Basic Auth ou 'id:token'.",
         });
       }
+
+      const { id, token } = parsedAuth;
 
       const user = await userInstModel.getUserBySecret(token);
-      if (!user) {
-        return res.status(403).json({ error: "Token inválido!" });
+      if (!user || user.id?.toString() !== id) {
+        return res.status(403).json({ error: "Token ou ID inválido!" });
       }
 
-      const userId = typeof user.id === "number" ? user.id.toString() : user.id;
-      if (userId !== id) {
-        return res
-          .status(403)
-          .json({ error: "ID não corresponde ao token fornecido!" });
-      }
-
-      const payload: Partial<authApiModelPayloadAttributes> =
+      const payload: Partial<AuthApiPayload> =
         req.method === "GET" ? req.query : req.body;
-      const { username, password } = payload;
+      const { username, password, get_id } = payload;
 
-      if (!username || !password) {
+      const allMissing =
+        (!username || typeof username !== "string" || username.trim() === "") &&
+        (!password || typeof password !== "string" || password.trim() === "") &&
+        (!get_id || typeof get_id !== "string" || get_id.trim() === "");
+
+      if (allMissing) {
         return res.status(400).json({
-          error: "Username e password são obrigatórios!",
+          error:
+            "É necessário informar pelo menos um dos campos: username, password ou get_id.",
         });
       }
 
-      if (typeof username !== "string" || typeof password !== "string") {
-        return res.status(400).json({
-          error: "Username e password devem ser strings válidas!",
-        });
-      }
-
-      if (username.trim() === "" || password.trim() === "") {
-        return res.status(400).json({
-          error: "Username e password não podem ser vazios!",
-        });
-      }
-      req.authData = {
-        username,
-        token
-      };
+      req.authData = { username, password, get_id, token };
       next();
     } catch (error) {
       console.error("Erro no processo de autenticação:", error);

@@ -19,6 +19,19 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
 }));
+app.use((req, res, next) => {
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const userAgent = req.headers["user-agent"];
+    const origin = req.headers["origin"] || req.headers["referer"];
+    console.log("======= NOVA REQUISIÇÃO =======");
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+    console.log("IP:", ip);
+    console.log("User-Agent:", userAgent);
+    console.log("Origin/Referer:", origin);
+    console.log("Headers:", req.headers);
+    console.log("================================");
+    next();
+});
 app.use(authUsers_route_1.default);
 app.use("/administration", verifyAdminToken_1.verifyAdminToken, adminRoutes_route_1.default);
 app.use("/admin", authAdmin_route_1.default);

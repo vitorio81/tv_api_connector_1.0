@@ -22,9 +22,9 @@ apiAuth.post(
   nextAuthUserApi.login,
   ThirdRequesController.handle
 );
-apiAuth.post(
+apiAuth.get(
   "/webservice/v1/cliente_contrato_retornar_produtos_contrato_28145",
-  nextAuthUserApi.login,
+  authUserApi.login,
   FourthRequesController.handle
 );
 

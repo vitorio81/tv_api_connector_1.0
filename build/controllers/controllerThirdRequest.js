@@ -45,6 +45,7 @@ ThirdRequesController.handle = (req, res, next) => __awaiter(void 0, void 0, voi
         try {
             const payload = ThirdAcessRequestPayload_1.ThirdAccessRequestPayload.create(query, basicAuthToken, host);
             const result = yield ThirdRequestService_1.SecondRequestService.request(payload);
+            console.log("Resultado da requisição:", result);
             yield requestIntModel.createRequest({
                 host,
                 status: "sucesso",

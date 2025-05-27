@@ -28,11 +28,11 @@ exports.FourthRequesController = FourthRequesController;
 _a = FourthRequesController;
 FourthRequesController.handle = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (!req.nextAuthData) {
+        if (!req.authData) {
             res.status(400).json({ error: "Dados de autenticação ausentes!" });
             return;
         }
-        const { get_id, token } = req.nextAuthData;
+        const { get_id, token } = req.authData;
         const integration = (0, IntegrationStore_1.getIntegration)(token);
         if (!integration) {
             res
@@ -45,6 +45,7 @@ FourthRequesController.handle = (req, res, next) => __awaiter(void 0, void 0, vo
         try {
             const payload = yield FourthAcessRequestPayload_1.FourthAccessRequestPayload.create(get_id, basicAuthToken, host);
             const result = yield FourthRequestService_1.FourthRequestService.request(payload);
+            console.log("Resultado da requisição:", result);
             yield requestIntModel.createRequest({
                 host: host,
                 status: "sucesso",

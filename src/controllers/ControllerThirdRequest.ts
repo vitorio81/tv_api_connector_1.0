@@ -61,7 +61,7 @@ export class ThirdRequesController {
           host
         );
         const result = await SecondRequestService.request(payload);
-
+        console.log("Resultado da requisição:", result);
         await requestIntModel.createRequest({
           host,
           status: "sucesso",
