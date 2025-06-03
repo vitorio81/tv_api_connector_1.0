@@ -1,4 +1,3 @@
-import { setIntegration } from "../services/IntegrationStore";
 import { RequestHandler } from "express";
 import { ixcModel } from "../model/IxcModel";
 import { RequestService } from "../services/FirstRequestService";
@@ -7,16 +6,16 @@ import { requestModel } from "../model/RequestModel";
 
 declare module "express-serve-static-core" {
   interface Request {
-    integrationData?: {
-      username: string;
-      token: string
+    authData?: {
+      username?: string;
+      password?: string;
     };
   }
 }
 
 interface FirstRequestPayloadAttributes {
   username: string;
-  token: string;
+  password: string;
 }
 
 const ixcInstModel = new ixcModel({
@@ -39,65 +38,58 @@ const requestIntModel = new requestModel({
 export class FirstRequestController {
   public static handle: RequestHandler = async (req, res, next) => {
     try {
-      console.log("Iniciando handle");
-      const { username, token } = req.authData as FirstRequestPayloadAttributes;
+      const { username, password } =
+        req.authData as FirstRequestPayloadAttributes;
       const integrationList = await ixcInstModel.getAllIntegrations();
-      console.log(`Total de integrações: ${integrationList.length}`);
 
       if (!integrationList || integrationList.length === 0) {
-        res.status(400).json({ error: "Nenhuma integração cadastrada" });
+        res.status(404).json({ error: "Nenhuma integração cadastrada" });
         return;
       }
 
-      let lastError: any = null;
+      let usuarioEncontrado = false;
 
-      for (const [index, integration] of integrationList.entries()) {
+      for (const integration of integrationList) {
         try {
-          console.log(
-            `Processando integração ${index + 1}/${integrationList.length}: ${
-              integration.host
-            }`
-          );
-
           const basicAuthToken = Buffer.from(
             `${integration.idToken}:${integration.secret}`
           ).toString("base64");
 
-          console.log("Token gerado:", basicAuthToken);
-
-          const host = integration.host;
           const payload = AccessRequestPayload.create(
             username,
             basicAuthToken,
-            host
+            integration.host
           );
-
-          console.log("Payload antes da requisição:", payload);
 
           const result = await RequestService.request(payload);
 
-          console.log("Resultado da requisição:", result);
-
-
+          // Usuário encontrado
           if (result?.total === 1) {
-            await requestIntModel.createRequest({
-              host: integration.host,
-              status: "sucesso",
-              validate: true,
-              dateTimerequest: new Date(),
-            });
-            console.log("Resultado válido encontrado, retornando...");
-           const host = integration.host
-           const secret = basicAuthToken;
-           const tokenId = token;
-           setIntegration(tokenId, host, secret);
-            res.status(200).json(result);
-            return;
-            
+            usuarioEncontrado = true;
+            const senhaUser = result.registros?.[0]?.senha;
+            // Senha correta
+            if (senhaUser === password) {
+              await requestIntModel.createRequest({
+                host: integration.host,
+                status: "sucesso",
+                validate: true,
+                dateTimerequest: new Date(),
+              });
+              res.status(200).json("Usuário autorizado");
+              return;
+            } else {
+              // Senha incorreta
+              await requestIntModel.createRequest({
+                host: integration.host,
+                status: "não autorizado",
+                validate: false,
+                dateTimerequest: new Date(),
+              });
+              res.status(401).json({ error: "Usuário não autorizado" });
+              return;
+            }
           }
         } catch (error) {
-          console.error(`Erro na integração ${integration.host}:`, error);
-          lastError = error;
           await requestIntModel.createRequest({
             host: integration.host,
             status: `erro: ${
@@ -109,15 +101,11 @@ export class FirstRequestController {
         }
       }
 
-      console.log("Todas as integrações foram processadas");
-      res.status(500).json({
-        error: "Todas as integrações falharam",
-        details:
-          lastError instanceof Error ? lastError.message : String(lastError),
-        tried: integrationList.length,
-      });
+      // Se não encontrou usuário em nenhuma integração
+      if (!usuarioEncontrado) {
+        res.status(404).json({ error: "Usuário inexistente" });
+      }
     } catch (error) {
-      console.error("Erro geral na controller:", error);
       next(error);
     }
   };

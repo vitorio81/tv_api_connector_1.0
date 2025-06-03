@@ -27,7 +27,7 @@ export class ThirdAccessRequestPayload {
     this.url = attributes.url;
   }
   static create(
-    query: string,
+    id: string,
     basicAuthToken: string,
     host: string
   ): AccessRequestPayloadType {
@@ -36,7 +36,7 @@ export class ThirdAccessRequestPayload {
     const url = `${host.toLowerCase()}/${config.typeSecondRequest.toLowerCase()}`;
     const data: AccessRequestData = {
       qtype: "cliente_contrato.id_cliente",
-      query: query,
+      query: id,
       oper: "=",
     };
 

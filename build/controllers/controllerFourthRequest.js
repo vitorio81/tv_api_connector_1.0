@@ -8,13 +8,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FourthRequesController = void 0;
 const FourthRequestService_1 = require("../services/FourthRequestService");
 const FourthAcessRequestPayload_1 = require("../model/FourthAcessRequestPayload");
 const RequestModel_1 = require("../model/RequestModel");
-const IntegrationStore_1 = require("../services/IntegrationStore");
 const requestIntModel = new RequestModel_1.requestModel({
     id: 0,
     host: "",
@@ -23,57 +21,43 @@ const requestIntModel = new RequestModel_1.requestModel({
     dateTimerequest: new Date(),
 });
 class FourthRequesController {
+    static handleDirect(id, host, basicAuthToken, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const payload = FourthAcessRequestPayload_1.FourthAccessRequestPayload.create(id, basicAuthToken, host);
+                const result = yield FourthRequestService_1.FourthRequestService.request(payload);
+                yield requestIntModel.createRequest({
+                    host,
+                    status: "sucesso",
+                    validate: true,
+                    dateTimerequest: new Date(),
+                });
+                // Validação robusta do retorno
+                const registros = Array.isArray(result.registros)
+                    ? result.registros[0]
+                    : [];
+                const planosNaTv = Array.isArray(registros)
+                    ? registros.filter((item) => typeof item.vd_contratos_produtos_descricao === "string" &&
+                        item.vd_contratos_produtos_descricao.startsWith("NaTv"))
+                    : [];
+                const planosNaTvDescricao = planosNaTv.map((item) => item.vd_contratos_produtos_descricao);
+                return res.status(200).json(planosNaTvDescricao);
+            }
+            catch (error) {
+                yield requestIntModel.createRequest({
+                    host,
+                    status: `erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
+                    validate: false,
+                    dateTimerequest: new Date(),
+                });
+                // Só envia a resposta de erro, não chama next(error) após enviar resposta
+                return res.status(500).json({
+                    error: "Falha na integração",
+                    details: error instanceof Error ? error.message : String(error),
+                    integrationHost: host,
+                });
+            }
+        });
+    }
 }
 exports.FourthRequesController = FourthRequesController;
-_a = FourthRequesController;
-FourthRequesController.handle = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        if (!req.authData) {
-            res.status(400).json({ error: "Dados de autenticação ausentes!" });
-            return;
-        }
-        const { get_id, token } = req.authData;
-        const integration = (0, IntegrationStore_1.getIntegration)(token);
-        if (!integration) {
-            res
-                .status(404)
-                .json({ error: "Integração não encontrada para esse token." });
-            return;
-        }
-        const host = integration.host;
-        const basicAuthToken = integration.secret;
-        try {
-            const payload = yield FourthAcessRequestPayload_1.FourthAccessRequestPayload.create(get_id, basicAuthToken, host);
-            const result = yield FourthRequestService_1.FourthRequestService.request(payload);
-            console.log("Resultado da requisição:", result);
-            yield requestIntModel.createRequest({
-                host: host,
-                status: "sucesso",
-                validate: true,
-                dateTimerequest: new Date(),
-            });
-            console.log(result);
-            res.status(200).json(result);
-            return;
-        }
-        catch (error) {
-            console.error("Erro na requisição:", error);
-            yield requestIntModel.createRequest({
-                host,
-                status: `erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
-                validate: false,
-                dateTimerequest: new Date(),
-            });
-            res.status(500).json({
-                error: "Falha na integração",
-                details: error instanceof Error ? error.message : String(error),
-                integrationHost: host,
-            });
-        }
-    }
-    catch (error) {
-        console.error("Erro geral na controller:", error);
-        next(error);
-    }
-});
-;

@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FirstRequestController = void 0;
-const IntegrationStore_1 = require("../services/IntegrationStore");
 const IxcModel_1 = require("../model/IxcModel");
 const FirstRequestService_1 = require("../services/FirstRequestService");
 const FirtsAcessRequestPayload_1 = require("../model/FirtsAcessRequestPayload");
@@ -36,45 +35,49 @@ class FirstRequestController {
 exports.FirstRequestController = FirstRequestController;
 _a = FirstRequestController;
 FirstRequestController.handle = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b, _c;
     try {
-        console.log("Iniciando handle");
-        const { username, token } = req.authData;
+        const { username, password } = req.authData;
         const integrationList = yield ixcInstModel.getAllIntegrations();
-        console.log(`Total de integrações: ${integrationList.length}`);
         if (!integrationList || integrationList.length === 0) {
-            res.status(400).json({ error: "Nenhuma integração cadastrada" });
+            res.status(404).json({ error: "Nenhuma integração cadastrada" });
             return;
         }
-        let lastError = null;
-        for (const [index, integration] of integrationList.entries()) {
+        let usuarioEncontrado = false;
+        for (const integration of integrationList) {
             try {
-                console.log(`Processando integração ${index + 1}/${integrationList.length}: ${integration.host}`);
                 const basicAuthToken = Buffer.from(`${integration.idToken}:${integration.secret}`).toString("base64");
-                console.log("Token gerado:", basicAuthToken);
-                const host = integration.host;
-                const payload = FirtsAcessRequestPayload_1.AccessRequestPayload.create(username, basicAuthToken, host);
-                console.log("Payload antes da requisição:", payload);
+                const payload = FirtsAcessRequestPayload_1.AccessRequestPayload.create(username, basicAuthToken, integration.host);
                 const result = yield FirstRequestService_1.RequestService.request(payload);
-                console.log("Resultado da requisição:", result);
+                // Usuário encontrado
                 if ((result === null || result === void 0 ? void 0 : result.total) === 1) {
-                    yield requestIntModel.createRequest({
-                        host: integration.host,
-                        status: "sucesso",
-                        validate: true,
-                        dateTimerequest: new Date(),
-                    });
-                    console.log("Resultado válido encontrado, retornando...");
-                    const host = integration.host;
-                    const secret = basicAuthToken;
-                    const tokenId = token;
-                    (0, IntegrationStore_1.setIntegration)(tokenId, host, secret);
-                    res.status(200).json(result);
-                    return;
+                    usuarioEncontrado = true;
+                    const senhaUser = (_c = (_b = result.registros) === null || _b === void 0 ? void 0 : _b[0]) === null || _c === void 0 ? void 0 : _c.senha;
+                    // Senha correta
+                    if (senhaUser === password) {
+                        yield requestIntModel.createRequest({
+                            host: integration.host,
+                            status: "sucesso",
+                            validate: true,
+                            dateTimerequest: new Date(),
+                        });
+                        res.status(200).json("Usuário autorizado");
+                        return;
+                    }
+                    else {
+                        // Senha incorreta
+                        yield requestIntModel.createRequest({
+                            host: integration.host,
+                            status: "não autorizado",
+                            validate: false,
+                            dateTimerequest: new Date(),
+                        });
+                        res.status(401).json({ error: "Usuário não autorizado" });
+                        return;
+                    }
                 }
             }
             catch (error) {
-                console.error(`Erro na integração ${integration.host}:`, error);
-                lastError = error;
                 yield requestIntModel.createRequest({
                     host: integration.host,
                     status: `erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
@@ -83,15 +86,12 @@ FirstRequestController.handle = (req, res, next) => __awaiter(void 0, void 0, vo
                 });
             }
         }
-        console.log("Todas as integrações foram processadas");
-        res.status(500).json({
-            error: "Todas as integrações falharam",
-            details: lastError instanceof Error ? lastError.message : String(lastError),
-            tried: integrationList.length,
-        });
+        // Se não encontrou usuário em nenhuma integração
+        if (!usuarioEncontrado) {
+            res.status(404).json({ error: "Usuário inexistente" });
+        }
     }
     catch (error) {
-        console.error("Erro geral na controller:", error);
         next(error);
     }
 });

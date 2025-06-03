@@ -8,13 +8,13 @@ class ThirdAccessRequestPayload {
         this.headers = attributes.headers;
         this.url = attributes.url;
     }
-    static create(query, basicAuthToken, host) {
+    static create(id, basicAuthToken, host) {
         if (!env_1.config.typeSecondRequest)
             throw new Error("Type não configurado");
         const url = `${host.toLowerCase()}/${env_1.config.typeSecondRequest.toLowerCase()}`;
         const data = {
             qtype: "cliente_contrato.id_cliente",
-            query: query,
+            query: id,
             oper: "=",
         };
         const headers = {

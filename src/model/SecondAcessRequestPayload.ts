@@ -32,7 +32,7 @@ export class AccessRequestPayload {
     this.url = attributes.url;
   }
   static create(
-    query: string,
+    username: string,
     basicAuthToken: string,
     host: string
   ): AccessRequestPayloadType {
@@ -40,7 +40,7 @@ export class AccessRequestPayload {
     const url = `${host.toLowerCase()}/${config.typeFirtsRequest.toLowerCase()}`;
     const data: AccessRequestData = {
       qtype: "cliente.hotsite_email",
-      query: query,
+      query: username,
       oper: "=",
       page: "1",
       rp: "20",

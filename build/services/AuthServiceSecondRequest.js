@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authUserApi = void 0;
+exports.secondAuthUserApi = void 0;
 const UserApiModel_1 = require("../model/UserApiModel");
 const userInstModel = new UserApiModel_1.UserApiModel({
     id: 0,
@@ -18,30 +18,28 @@ const userInstModel = new UserApiModel_1.UserApiModel({
     endpoint: "",
     currentDate: new Date(),
 });
-exports.authUserApi = {
+exports.secondAuthUserApi = {
     login: ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
         try {
-            // Recebe dados do corpo da requisição (form-urlencoded)
-            const { username, password } = req.body;
+            // Pegando o IP real de quem está enviando a requisição
             const ip = ((_a = req.headers["x-forwarded-for"]) === null || _a === void 0 ? void 0 : _a.toString().split(",")[0]) ||
                 req.socket.remoteAddress ||
                 req.ip;
-            console.log("IP do usuário:", ip);
-            const userIp = yield userInstModel.getUserByIp(ip);
-            if (!userIp) {
-                return res.status(403).json({ error: "API não autorizada pelo IP." });
+            // Aceita username e password tanto em GET (query) quanto em POST (body)
+            const username = req.query.username;
+            const password = req.query.password;
+            if (!username) {
+                return res.status(400).json({ error: "username é obrigatório!" });
             }
-            // Validação dos campos obrigatórios
-            if (!username ||
-                typeof username !== "string" ||
-                !password ||
-                typeof password !== "string") {
-                return res.status(400).json({
-                    error: "username e password são obrigatórios.",
-                });
+            const user = yield userInstModel.getUserByIp(ip);
+            if (!user) {
+                return res.status(403).json({ error: "IP inválido" });
             }
-            req.authData = { username, password };
+            req.nextAuthData = {
+                username: String(username),
+                password: password ? String(password) : undefined,
+            };
             next();
         }
         catch (error) {

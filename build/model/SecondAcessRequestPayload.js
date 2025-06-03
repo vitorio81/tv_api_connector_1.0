@@ -8,13 +8,13 @@ class AccessRequestPayload {
         this.headers = attributes.headers;
         this.url = attributes.url;
     }
-    static create(query, basicAuthToken, host) {
+    static create(username, basicAuthToken, host) {
         if (!env_1.config.typeFirtsRequest)
             throw new Error("Type não configurado");
         const url = `${host.toLowerCase()}/${env_1.config.typeFirtsRequest.toLowerCase()}`;
         const data = {
             qtype: "cliente.hotsite_email",
-            query: query,
+            query: username,
             oper: "=",
             page: "1",
             rp: "20",

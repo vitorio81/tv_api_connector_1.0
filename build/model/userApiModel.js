@@ -8,96 +8,69 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userApiModel = void 0;
+exports.UserApiModel = void 0;
 const env_1 = require("../config/env");
-const crypto_1 = __importDefault(require("crypto"));
 const pool_1 = require("../config/pool");
-class userApiModel {
+class UserApiModel {
     constructor(attributes) {
         this.id = attributes.id;
         this.name = attributes.name;
-        this.secret = attributes.secret;
+        this.ip = attributes.ip;
         this.endpoint = attributes.endpoint;
         this.currentDate = attributes.currentDate;
     }
     getAllUsers() {
         return __awaiter(this, void 0, void 0, function* () {
-            const { rows } = yield (0, pool_1.query)(`SELECT
-        id, name, secret, endpoint, currentdate AS "currentDate"
-      FROM users
-    `);
-            return rows; // Retorna todos os usuários
+            const { rows } = yield (0, pool_1.query)(`SELECT id, name, ip, endpoint, currentdate AS "currentDate" FROM users`);
+            return rows;
         });
     }
     getUserById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { rows } = yield (0, pool_1.query)(`SELECT 
-      id, name, secret, endpoint, currentdate AS "currentDate"
-    FROM users WHERE id = $1
-    `, [id]);
-            return rows[0];
+            const { rows } = yield (0, pool_1.query)(`SELECT id, name, ip, endpoint, currentdate AS "currentDate" FROM users WHERE id = $1`, [id]);
+            return rows[0] ? rows[0] : null;
         });
     }
     getUserByName(name) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { rows } = yield (0, pool_1.query)(` SELECT 
-      id, name, secret, endpoint, currentdate AS "currentDate"
-      FROM users WHERE name = $1`, [name]);
-            return rows[0];
+            const { rows } = yield (0, pool_1.query)(`SELECT id, name, ip, endpoint, currentdate AS "currentDate" FROM users WHERE name = $1`, [name]);
+            return rows[0] ? rows[0] : null;
+        });
+    }
+    getUserByIp(ip) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { rows } = yield (0, pool_1.query)(`SELECT id, name, ip, endpoint, currentdate AS "currentDate" FROM users WHERE ip = $1`, [ip]);
+            return rows[0] ? rows[0] : null;
         });
     }
     getUsersByPartialName(partialName) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { rows } = yield (0, pool_1.query)(`SELECT 
-      id, name, secret, endpoint, currentdate AS "currentDate"
-     FROM users
-     WHERE name ILIKE $1`, [`%${partialName}%`]);
-            return rows; // Retorna todos os usuários que contenham 'partialName' no nome
+            const { rows } = yield (0, pool_1.query)(`SELECT id, name, ip, endpoint, currentdate AS "currentDate" FROM users WHERE name ILIKE $1`, [`%${partialName}%`]);
+            return rows;
         });
     }
     getUserByContract(contract) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { rows } = yield (0, pool_1.query)(` SELECT 
-      id, name, secret, endpoint, currentdate AS "currentDate"
-      FROM users WHERE contract = $1`, [contract]);
-            return rows[0];
-        });
-    }
-    getUserBySecret(secret) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const { rows } = yield (0, pool_1.query)(` SELECT 
-      id, name, secret, endpoint, currentdate AS "currentDate"
-      FROM users WHERE secret = $1`, [secret]);
-            return rows[0];
+            const { rows } = yield (0, pool_1.query)(`SELECT id, name, ip, endpoint, currentdate AS "currentDate" FROM users WHERE contract = $1`, [contract]);
+            return rows[0] ? rows[0] : null;
         });
     }
     createUser(attributes) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { name } = attributes;
-            if (!env_1.config.apiSecretTokenKey) {
-                throw new Error("API_SECRET_TOKEN_KEY is not defined");
-            }
-            const secret = crypto_1.default
-                .createHash("sha256")
-                .update(name + env_1.config.apiSecretTokenKey)
-                .digest("hex");
+            const { name, ip } = attributes;
             const endpoint = `${env_1.config.host}/${env_1.config.typeEndPoint}`;
             const currentDate = new Date();
-            const { rows } = yield (0, pool_1.query)(`INSERT INTO users (name, secret, endpoint, currentdate) VALUES ($1, $2, $3, $4) RETURNING id;`, [name, secret, endpoint, currentDate]);
+            const { rows } = yield (0, pool_1.query)(`INSERT INTO users (name, ip, endpoint, currentdate) VALUES ($1, $2, $3, $4) RETURNING id;`, [name, ip, endpoint, currentDate]);
             const id = rows[0].id;
-            const newUser = {
+            return {
                 id,
                 name,
-                secret,
+                ip,
                 endpoint,
                 currentDate,
             };
-            return newUser;
         });
     }
 }
-exports.userApiModel = userApiModel;
+exports.UserApiModel = UserApiModel;

@@ -1,125 +1,102 @@
 import { config } from "../config/env";
-import crypto from "crypto";
 import { query } from "../config/pool";
 
-
-interface userApiModelPayloadAttributes {
+interface UserApiModelPayloadAttributes {
   id: number;
   name: string;
-  secret: string;
+  ip: string;
   endpoint: string;
   currentDate: Date;
 }
 
-export class userApiModel {
+export class UserApiModel {
   id: number;
   name: string;
-  secret: string;
+  ip: string;
   endpoint: string;
   currentDate: Date;
 
-  constructor(attributes: userApiModelPayloadAttributes) {
+  constructor(attributes: UserApiModelPayloadAttributes) {
     this.id = attributes.id;
     this.name = attributes.name;
-    this.secret = attributes.secret;
+    this.ip = attributes.ip;
     this.endpoint = attributes.endpoint;
     this.currentDate = attributes.currentDate;
   }
-  async getAllUsers(): Promise<userApiModelPayloadAttributes[]> {
+
+  async getAllUsers(): Promise<UserApiModelPayloadAttributes[]> {
     const { rows } = await query(
-      `SELECT
-        id, name, secret, endpoint, currentdate AS "currentDate"
-      FROM users
-    `
+      `SELECT id, name, ip, endpoint, currentdate AS "currentDate" FROM users`
     );
-    return rows as userApiModelPayloadAttributes[]; // Retorna todos os usuários
+    return rows as UserApiModelPayloadAttributes[];
   }
 
-  async getUserById(id: number): Promise<userApiModelPayloadAttributes | null> {
+  async getUserById(id: number): Promise<UserApiModelPayloadAttributes | null> {
     const { rows } = await query(
-      `SELECT 
-      id, name, secret, endpoint, currentdate AS "currentDate"
-    FROM users WHERE id = $1
-    `,
+      `SELECT id, name, ip, endpoint, currentdate AS "currentDate" FROM users WHERE id = $1`,
       [id]
     );
-    return rows[0] as userApiModelPayloadAttributes;
+    return rows[0] ? (rows[0] as UserApiModelPayloadAttributes) : null;
   }
 
   async getUserByName(
     name: string
-  ): Promise<userApiModelPayloadAttributes | null> {
+  ): Promise<UserApiModelPayloadAttributes | null> {
     const { rows } = await query(
-      ` SELECT 
-      id, name, secret, endpoint, currentdate AS "currentDate"
-      FROM users WHERE name = $1`,
+      `SELECT id, name, ip, endpoint, currentdate AS "currentDate" FROM users WHERE name = $1`,
       [name]
     );
-    return rows[0] as userApiModelPayloadAttributes;
+    return rows[0] ? (rows[0] as UserApiModelPayloadAttributes) : null;
   }
 
-  async getUsersByPartialName(partialName: string) {
+  async getUserByIp(ip: string): Promise<UserApiModelPayloadAttributes | null> {
     const { rows } = await query(
-      `SELECT 
-      id, name, secret, endpoint, currentdate AS "currentDate"
-     FROM users
-     WHERE name ILIKE $1`,
+      `SELECT id, name, ip, endpoint, currentdate AS "currentDate" FROM users WHERE ip = $1`,
+      [ip]
+    );
+    return rows[0] ? (rows[0] as UserApiModelPayloadAttributes) : null;
+  }
+
+  async getUsersByPartialName(
+    partialName: string
+  ): Promise<UserApiModelPayloadAttributes[]> {
+    const { rows } = await query(
+      `SELECT id, name, ip, endpoint, currentdate AS "currentDate" FROM users WHERE name ILIKE $1`,
       [`%${partialName}%`]
     );
-    return rows as userApiModelPayloadAttributes[]; // Retorna todos os usuários que contenham 'partialName' no nome
+    return rows as UserApiModelPayloadAttributes[];
   }
 
   async getUserByContract(
     contract: string
-  ): Promise<userApiModelPayloadAttributes | null> {
+  ): Promise<UserApiModelPayloadAttributes | null> {
     const { rows } = await query(
-      ` SELECT 
-      id, name, secret, endpoint, currentdate AS "currentDate"
-      FROM users WHERE contract = $1`,
+      `SELECT id, name, ip, endpoint, currentdate AS "currentDate" FROM users WHERE contract = $1`,
       [contract]
     );
-    return rows[0] as userApiModelPayloadAttributes;
+    return rows[0] ? (rows[0] as UserApiModelPayloadAttributes) : null;
   }
 
-  async getUserBySecret(
-    secret: string
-  ): Promise<userApiModelPayloadAttributes | null> {
-    const { rows } = await query(
-      ` SELECT 
-      id, name, secret, endpoint, currentdate AS "currentDate"
-      FROM users WHERE secret = $1`,
-      [secret]
-    );
-    return rows[0];
-  }
   async createUser(
     attributes: Omit<
-      userApiModelPayloadAttributes,
-      "id" | "secret" | "endpoint" | "currentDate"
+      UserApiModelPayloadAttributes,
+      "id" | "endpoint" | "currentDate"
     >
-  ): Promise<userApiModelPayloadAttributes> {
-    const { name } = attributes;
-    if (!config.apiSecretTokenKey) {
-      throw new Error("API_SECRET_TOKEN_KEY is not defined");
-    }
-    const secret = crypto
-      .createHash("sha256")
-      .update(name + config.apiSecretTokenKey)
-      .digest("hex");
+  ): Promise<UserApiModelPayloadAttributes> {
+    const { name, ip } = attributes;
     const endpoint = `${config.host}/${config.typeEndPoint}`;
     const currentDate = new Date();
     const { rows } = await query(
-      `INSERT INTO users (name, secret, endpoint, currentdate) VALUES ($1, $2, $3, $4) RETURNING id;`,
-      [name, secret, endpoint, currentDate]
+      `INSERT INTO users (name, ip, endpoint, currentdate) VALUES ($1, $2, $3, $4) RETURNING id;`,
+      [name, ip, endpoint, currentDate]
     );
     const id = rows[0].id;
-    const newUser = {
+    return {
       id,
       name,
-      secret,
+      ip,
       endpoint,
       currentDate,
     };
-    return newUser;
   }
 }

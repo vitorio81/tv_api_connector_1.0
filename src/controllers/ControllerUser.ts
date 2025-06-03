@@ -1,16 +1,16 @@
 import { query } from "../config/pool";
 import { RequestHandler } from "express";
-import { userApiModel } from "../model/UserApiModel";
+import { UserApiModel } from "../model/UserApiModel";
 
 interface controllerUserPayloadAttributes {
   name: string;
-  contract: string;
+  ip: string
 }
 
-const userModel = new userApiModel({
+const userModel = new UserApiModel({
   id: 0,
   name: "",
-  secret: "",
+  ip: "",
   endpoint: "",
   currentDate: new Date(),
 });
@@ -18,18 +18,19 @@ const userModel = new userApiModel({
 export const controllerUser = {
   register: (async (req, res, next) => {
     try {
-      const { name }: controllerUserPayloadAttributes = req.body;
+      const { name, ip }: controllerUserPayloadAttributes = req.body;
 
-      if (typeof name !== "string") {
+      if (typeof name !== "string" || typeof ip !== "string") {
         return res
           .status(400)
           .json({ message: "Todos os campos são obrigatórios" });
       }
 
       const userName = await userModel.getUserByName(name);
+      const userIp = await userModel.getUserByIp(ip);
 
-      if (!userName) {
-        const newUsers = await userModel.createUser({ name });
+      if (!userName || !userIp) {
+        const newUsers = await userModel.createUser({ name, ip });
         return res.status(201).json(newUsers);
       } else {
         return res.status(400).json({ error: "Usuário já existente!" });

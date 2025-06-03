@@ -25,14 +25,14 @@ export class FourthAccessRequestPayload {
     this.url = attributes.url;
   }
   static create(
-    get_id: string,
+    id: string,
     basicAuthToken: string,
     host: string
   ): AccessRequestPayloadType {
     if (!config.typeFourthRequest) throw new Error("Type não configurado");
     const url = `${host.toLowerCase()}/${config.typeFourthRequest.toLowerCase()}`;
     const data: AccessRequestData = {
-      get_id: get_id,
+      get_id: id,
     };
 
     const headers: AccessRequestHeaders = {

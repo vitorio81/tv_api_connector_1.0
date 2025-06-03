@@ -8,12 +8,12 @@ class FourthAccessRequestPayload {
         this.headers = attributes.headers;
         this.url = attributes.url;
     }
-    static create(get_id, basicAuthToken, host) {
+    static create(id, basicAuthToken, host) {
         if (!env_1.config.typeFourthRequest)
             throw new Error("Type não configurado");
         const url = `${host.toLowerCase()}/${env_1.config.typeFourthRequest.toLowerCase()}`;
         const data = {
-            get_id: get_id,
+            get_id: id,
         };
         const headers = {
             ixcsoft: "listar",

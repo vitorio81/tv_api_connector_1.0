@@ -1,28 +1,21 @@
-import { setIntegration } from "../services/IntegrationStore";
 import { RequestHandler } from "express";
 import { ixcModel } from "../model/IxcModel";
 import { RequestService } from "../services/SecondRequestService";
 import { AccessRequestPayload } from "../model/SecondAcessRequestPayload";
 import { requestModel } from "../model/RequestModel";
+import { ThirdRequesController } from "../controllers/ControllerThirdRequest"; // Certifique-se de importar corretamente
 
 declare module "express-serve-static-core" {
   interface Request {
     nextAuthData?: {
-      qtype: string;
-      query: string;
-      oper: string;
-      get_id: string;
-      token: string;
+      username?: string;
+      password?: string;
     };
   }
 }
 
 interface SecondRequestPayloadAttributes {
-  qtype: string;
-  query: string;
-  oper: string;
-  get_id: string;
-  token: string;
+  username?: string;
 }
 
 const ixcInstModel = new ixcModel({
@@ -46,7 +39,11 @@ export class SecondRequestController {
   public static handle: RequestHandler = async (req, res, next) => {
     try {
       console.log("Iniciando handle");
-      const { query, token } = req.nextAuthData as SecondRequestPayloadAttributes;
+      const { username } = req.nextAuthData as SecondRequestPayloadAttributes;
+      if (!username) {
+        res.status(400).json({ error: "Dados de autenticação ausentes!" });
+        return;
+      }
       const integrationList = await ixcInstModel.getAllIntegrations();
       console.log(`Total de integrações: ${integrationList.length}`);
 
@@ -73,7 +70,7 @@ export class SecondRequestController {
 
           const host = integration.host;
           const payload = AccessRequestPayload.create(
-            query,
+            username,
             basicAuthToken,
             host
           );
@@ -83,23 +80,26 @@ export class SecondRequestController {
           const result = await RequestService.request(payload);
 
           console.log("Resultado da requisição:", result);
+          const idContrato = result.registros?.[0]?.id;
 
-
-          if (result?.total === 1) {
+          if (result?.total === 1 || idContrato) {
             await requestIntModel.createRequest({
               host: integration.host,
               status: "sucesso",
               validate: true,
               dateTimerequest: new Date(),
             });
-            console.log("Resultado válido encontrado, retornando...");
-           const host = integration.host
-           const secret = basicAuthToken;
-           const tokenId = token;
-           setIntegration(tokenId, host, secret);
-            res.status(200).json(result);
+            console.log(`Usuário encontrado na integração ${integration.host}`);
+            console.log( idContrato);
+            // Chama a função ThirdAcessRequestPayload passando os dados necessários
+            await ThirdRequesController.handleDirect(
+              idContrato,
+              integration.host,
+              basicAuthToken,
+              res,
+              next
+            );
             return;
-            
           }
         } catch (error) {
           console.error(`Erro na integração ${integration.host}:`, error);
@@ -116,8 +116,8 @@ export class SecondRequestController {
       }
 
       console.log("Todas as integrações foram processadas");
-      res.status(500).json({
-        error: "Todas as integrações falharam",
+      res.status(404).json({
+        error: "Usuário não encontrado em nenhuma integração",
         details:
           lastError instanceof Error ? lastError.message : String(lastError),
         tried: integrationList.length,

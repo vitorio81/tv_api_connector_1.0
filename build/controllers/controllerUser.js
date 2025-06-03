@@ -12,25 +12,26 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.controllerUser = void 0;
 const pool_1 = require("../config/pool");
 const UserApiModel_1 = require("../model/UserApiModel");
-const userModel = new UserApiModel_1.userApiModel({
+const userModel = new UserApiModel_1.UserApiModel({
     id: 0,
     name: "",
-    secret: "",
+    ip: "",
     endpoint: "",
     currentDate: new Date(),
 });
 exports.controllerUser = {
     register: ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const { name } = req.body;
-            if (typeof name !== "string") {
+            const { name, ip } = req.body;
+            if (typeof name !== "string" || typeof ip !== "string") {
                 return res
                     .status(400)
                     .json({ message: "Todos os campos são obrigatórios" });
             }
             const userName = yield userModel.getUserByName(name);
-            if (!userName) {
-                const newUsers = yield userModel.createUser({ name });
+            const userIp = yield userModel.getUserByIp(ip);
+            if (!userName || !userIp) {
+                const newUsers = yield userModel.createUser({ name, ip });
                 return res.status(201).json(newUsers);
             }
             else {

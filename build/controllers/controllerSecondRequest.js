@@ -11,11 +11,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SecondRequestController = void 0;
-const IntegrationStore_1 = require("../services/IntegrationStore");
 const IxcModel_1 = require("../model/IxcModel");
 const SecondRequestService_1 = require("../services/SecondRequestService");
 const SecondAcessRequestPayload_1 = require("../model/SecondAcessRequestPayload");
 const RequestModel_1 = require("../model/RequestModel");
+const ControllerThirdRequest_1 = require("../controllers/ControllerThirdRequest"); // Certifique-se de importar corretamente
 const ixcInstModel = new IxcModel_1.ixcModel({
     id: 0,
     name: "",
@@ -36,9 +36,14 @@ class SecondRequestController {
 exports.SecondRequestController = SecondRequestController;
 _a = SecondRequestController;
 SecondRequestController.handle = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b, _c;
     try {
         console.log("Iniciando handle");
-        const { query, token } = req.nextAuthData;
+        const { username } = req.nextAuthData;
+        if (!username) {
+            res.status(400).json({ error: "Dados de autenticação ausentes!" });
+            return;
+        }
         const integrationList = yield ixcInstModel.getAllIntegrations();
         console.log(`Total de integrações: ${integrationList.length}`);
         if (!integrationList || integrationList.length === 0) {
@@ -52,23 +57,22 @@ SecondRequestController.handle = (req, res, next) => __awaiter(void 0, void 0, v
                 const basicAuthToken = Buffer.from(`${integration.idToken}:${integration.secret}`).toString("base64");
                 console.log("Token gerado:", basicAuthToken);
                 const host = integration.host;
-                const payload = SecondAcessRequestPayload_1.AccessRequestPayload.create(query, basicAuthToken, host);
+                const payload = SecondAcessRequestPayload_1.AccessRequestPayload.create(username, basicAuthToken, host);
                 console.log("Payload antes da requisição:", payload);
                 const result = yield SecondRequestService_1.RequestService.request(payload);
                 console.log("Resultado da requisição:", result);
-                if ((result === null || result === void 0 ? void 0 : result.total) === 1) {
+                const idContrato = (_c = (_b = result.registros) === null || _b === void 0 ? void 0 : _b[0]) === null || _c === void 0 ? void 0 : _c.id;
+                if ((result === null || result === void 0 ? void 0 : result.total) === 1 || idContrato) {
                     yield requestIntModel.createRequest({
                         host: integration.host,
                         status: "sucesso",
                         validate: true,
                         dateTimerequest: new Date(),
                     });
-                    console.log("Resultado válido encontrado, retornando...");
-                    const host = integration.host;
-                    const secret = basicAuthToken;
-                    const tokenId = token;
-                    (0, IntegrationStore_1.setIntegration)(tokenId, host, secret);
-                    res.status(200).json(result);
+                    console.log(`Usuário encontrado na integração ${integration.host}`);
+                    console.log(idContrato);
+                    // Chama a função ThirdAcessRequestPayload passando os dados necessários
+                    yield ControllerThirdRequest_1.ThirdRequesController.handleDirect(idContrato, integration.host, basicAuthToken, res, next);
                     return;
                 }
             }
@@ -84,8 +88,8 @@ SecondRequestController.handle = (req, res, next) => __awaiter(void 0, void 0, v
             }
         }
         console.log("Todas as integrações foram processadas");
-        res.status(500).json({
-            error: "Todas as integrações falharam",
+        res.status(404).json({
+            error: "Usuário não encontrado em nenhuma integração",
             details: lastError instanceof Error ? lastError.message : String(lastError),
             tried: integrationList.length,
         });

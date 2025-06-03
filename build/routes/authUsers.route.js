@@ -5,14 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const AuthServiceFirtsRequest_1 = require("../services/AuthServiceFirtsRequest");
-const AuthServiceNextRequest_1 = require("../services/AuthServiceNextRequest");
 const ControllerFirstResquest_1 = require("../controllers/ControllerFirstResquest");
+const AuthServiceSecondRequest_1 = require("../services/AuthServiceSecondRequest");
 const ControllerSecondRequest_1 = require("../controllers/ControllerSecondRequest");
-const ControllerThirdRequest_1 = require("../controllers/ControllerThirdRequest");
-const ControllerFourthRequest_1 = require("../controllers/ControllerFourthRequest");
 const apiAuth = express_1.default.Router();
-apiAuth.get("/ixc.standard.central.vd_contrato_produto", AuthServiceFirtsRequest_1.authUserApi.login, ControllerFirstResquest_1.FirstRequestController.handle);
-apiAuth.post("/webservice/v1/cliente", AuthServiceNextRequest_1.nextAuthUserApi.login, ControllerSecondRequest_1.SecondRequestController.handle);
-apiAuth.post("/webservice/v1/cliente_contrato", AuthServiceNextRequest_1.nextAuthUserApi.login, ControllerThirdRequest_1.ThirdRequesController.handle);
-apiAuth.get("/webservice/v1/cliente_contrato_retornar_produtos_contrato_28145", AuthServiceFirtsRequest_1.authUserApi.login, ControllerFourthRequest_1.FourthRequesController.handle);
+apiAuth.post("/auth", AuthServiceFirtsRequest_1.authUserApi.login, ControllerFirstResquest_1.FirstRequestController.handle);
+apiAuth.get("/auth", AuthServiceSecondRequest_1.secondAuthUserApi.login, ControllerSecondRequest_1.SecondRequestController.handle);
 exports.default = apiAuth;
